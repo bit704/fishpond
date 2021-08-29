@@ -11,6 +11,6 @@ public class DataTest extends FishpondApplicationTests{
 
     @Test
     public void testMapper() {
-        System.out.println(humanMapper.selectById(1).toString());
+        System.out.println(humanMapper.selectAll().toString());
     }
 }
