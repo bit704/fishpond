@@ -8,9 +8,9 @@ import org.springframework.stereotype.Component;
 @Component
 public interface HumanMapper {
 
-    @Select("select * from fishpond.human where id = #{id}")
+    @Select("select * from human where id = #{id}")
     public HumanDO selectById(@Param("id") int id);
 
-    @Select("select * from fishpond.human")
+    @Select("select * from human")
     public HumanDO selectAll();
 }
