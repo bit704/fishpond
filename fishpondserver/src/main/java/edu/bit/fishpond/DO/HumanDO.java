@@ -1,26 +1,13 @@
 package edu.bit.fishpond.DO;
 
+/**
+ * 用来测试的类，无实际意义
+ */
 public class HumanDO {
 
     private int id;
 
     private  String name;
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
 
     @Override
     public String toString() {
