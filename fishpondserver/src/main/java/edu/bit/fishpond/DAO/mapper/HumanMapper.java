@@ -1,6 +1,6 @@
-package edu.bit.fishpond.mapper;
+package edu.bit.fishpond.DAO.mapper;
 
-import edu.bit.fishpond.DO.HumanDO;
+import edu.bit.fishpond.DAO.DO.HumanDO;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.springframework.stereotype.Component;

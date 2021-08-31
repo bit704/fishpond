@@ -1,4 +1,4 @@
-package edu.bit.fishpond.DO;
+package edu.bit.fishpond.DAO.DO;
 
 public class UserInfoDO {
 

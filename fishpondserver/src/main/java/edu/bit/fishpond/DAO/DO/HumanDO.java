@@ -1,4 +1,4 @@
-package edu.bit.fishpond.DO;
+package edu.bit.fishpond.DAO.DO;
 
 /**
  * 用来测试的类，无实际意义
