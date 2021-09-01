@@ -1,28 +1,28 @@
 package edu.bit.fishpond;
 
-import edu.bit.fishpond.DAO.mapper.HumanMapper;
 import edu.bit.fishpond.DAO.mapper.UserInfoMapper;
+import edu.bit.fishpond.DAO.mapper.UserMapper;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public class DAOTest extends FishpondApplicationTests {
 
+    public static final Logger testLogger = LoggerFactory.getLogger(DAOTest.class);
+
     @Autowired
-    HumanMapper humanMapper;
+    UserMapper userMapper;
 
     @Autowired
     UserInfoMapper userInfoMapper;
 
     @Test
-    public void testMapper() {
-        System.out.println(humanMapper.selectAll().toString());
-    }
-
-    @Test
     public void testUserInfo() {
 
-        System.out.println(userInfoMapper.resetSeq());
-        System.out.println(userInfoMapper.insertOne("刘睿",
+       testLogger.info("测试输出："+ userInfoMapper.deleteAll());
+       testLogger.info("测试输出："+ userInfoMapper.insertOne(1,
+               "刘睿",
                 "M",
                 "2000-01-01",
                 "湖南",
@@ -30,10 +30,22 @@ public class DAOTest extends FishpondApplicationTests {
                 "2021-08-30",
                 "2021-08-30",
                 false));
-        System.out.println(userInfoMapper.selectAll().toString());
-        //System.out.println(userInfoMapper.updateOne("region","湖北",1));
-        //System.out.println(userInfoMapper.updateOne("state","true",1));
-        //System.out.println(userInfoMapper.selectOne(1).toString());
-        System.out.println(userInfoMapper.deleteAll());
+       //testLogger.info("测试输出：", userInfoMapper.selectBatch("uid","10000000").toString());
+
+       testLogger.info("测试输出："+ userInfoMapper.updateOne("region","'湖北'",10000000));
+       testLogger.info("测试输出："+ userInfoMapper.updateOne("state","true",10000000));
+
+       testLogger.info("测试输出："+ userInfoMapper.selectAll().toString());
+
+       testLogger.info("测试输出："+ userInfoMapper.deleteAll());
     }
+
+    @Test
+    public void test(){
+        testLogger.info("测试输出：" + userMapper.resetSeq(10000000));
+        testLogger.info("测试输出：" + userMapper.insertOne("kjkjk","whoareyou","刘睿"));
+        testLogger.info("测试输出：" + userMapper.selectAll().toString());
+        testLogger.info("测试输出：" + userMapper.deleteAll());
+    }
+
 }
