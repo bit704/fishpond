@@ -1,56 +1,144 @@
 package edu.bit.fishpond.server;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONException;
+import com.alibaba.fastjson.JSONObject;
+import edu.bit.fishpond.service.entity.*;
+import edu.bit.fishpond.service.UserService;
+import edu.bit.fishpond.utils.MessageHeadException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.websocket.*;
-import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
-import java.util.concurrent.CopyOnWriteArraySet;
+import java.nio.ByteBuffer;
 
-@ServerEndpoint("/websocket/{id}")
+@ServerEndpoint("/websocket")
 @Component
 public class WebSocketConnect {
+    private final Logger logger = LoggerFactory.getLogger(WebSocketConnect.class);
 
-    private static CopyOnWriteArraySet<WebSocketConnect> currentConnects = new CopyOnWriteArraySet<>();
     private Session session;
-    private Logger logger = LoggerFactory.getLogger(WebSocketConnect.class);
+    private int id = 0;
 
-    private StringBuffer stringBuffer;
-    private int id;
+    private static UserService userService;
+
+    @Autowired
+    public void setUserService(UserService  userService){
+        WebSocketConnect.userService = userService;
+    }
 
     @OnOpen
-    public void onOpen(Session newSession, @PathParam("id") int newId){
+    public void onOpen(Session newSession){
         session = newSession;
-        currentConnects.add(this);
-        id = newId;
-
-        logger.info("与" + newId + "建立会话");
+        logger.info("建立新的会话");
+        //sendMessageToOne("hello");
     }
 
     @OnClose
     public void onClose(){
-        currentConnects.remove(this);
-        logger.info("与" + id + "的会话关闭");
+        if (id != 0){
+            WebSocketServer.DisConnect(id);
+        }
+        logger.info(String.format("与%d的会话已关闭",id));
     }
 
     @OnMessage
-    public void onMessage(Session sendSession, String message){
-        stringBuffer = new StringBuffer();
-        stringBuffer.append("客户端：");
-        stringBuffer.append(id);
-        stringBuffer.append("发送消息：");
-        stringBuffer.append(message);
-        logger.info(stringBuffer.toString());
-        //使用Json作消息解析
-        SessionMessage sessionMessage = JSON.parseObject(message, SessionMessage.class);
+    public void onMessage(String message){
+
+        logger.info(String.format("客户端:%d发送了消息：%s",id,message));
+
+        //解析整条消息，得到消息头和消息体
+        String[] messageSplitArray = message.split("\\|",2);
+        if (messageSplitArray.length != 2){
+            logger.warn(String.format("无法解析：%s,消息格式错误",message));
+            return;
+        }
+
+        String head = messageSplitArray[0];
+        String body = messageSplitArray[1];
+        String sendMessageBody;
+        String sendMessageHead;
+        //根据消息头解析消息体
+        try {
+            switch (head){
+                case "Register":
+                    RegisterClientEntity registerClientEntity = JSONObject.parseObject(body, RegisterClientEntity.class);
+                    sendMessageBody = userService.register(registerClientEntity);
+                    sendMessageHead = "NewUserId";
+                    sendMessageDirect(sendMessageHead, sendMessageBody);
+                    break;
+                case "Login":
+                    LoginClientEntity loginClientEntity = JSONObject.parseObject(body, LoginClientEntity.class);
+
+                    boolean queryResult = userService.login(loginClientEntity);
+                    LoginServerEntity loginServerEntity = new LoginServerEntity();
+                    loginServerEntity.setLoginResult(queryResult);
+                    sendMessageBody = JSON.toJSONString(loginServerEntity);
+                    sendMessageHead = "LoginResult";
+                    if (queryResult){
+                        id = loginClientEntity.getLoginUserId();
+                        WebSocketServer.NewConnect(session, id);
+                    }
+
+                    sendMessageDirect(sendMessageHead, sendMessageBody);
+                    break;
+                case "FriendRequest":
+                    FriendRequestGetEntity friendRequestGetEntity =
+                            JSONObject.parseObject(body, FriendRequestGetEntity.class);
+                    sendMessageBody = userService.friendRequestHandler(friendRequestGetEntity);
+                    if (!sendMessageBody.isEmpty()){
+                        sendMessageDirect("FriendRequestFromOther", sendMessageBody);
+                    }
+                    break;
+                case "FRF":
+                    FRFGetEntity frfGetEntity = JSONObject.parseObject(body, FRFGetEntity.class);
+
+                    break;
+                case "GetFriendList":
+                    UserIdEntity userIdEntity = JSONObject.parseObject(body, UserIdEntity.class);
+                    sendMessageBody = userService.FriendListService(userIdEntity);
+                    sendMessageHead = "FriendList";
+                    sendMessageDirect(sendMessageHead, sendMessageBody);
+                    break;
+                case "OffLine":
+                    break;
+                case "SearchUser":
+                    SearchUserClientEntity searchUserClientEntity =
+                            JSONObject.parseObject(body, SearchUserClientEntity.class);
+                    sendMessageBody = userService.searchUser(searchUserClientEntity);
+                    sendMessageHead = "SearchUserResult";
+                    sendMessageDirect(sendMessageHead,sendMessageBody);
+                default:
+                    throw new MessageHeadException(String.format("无法解析:%s,未知的消息头%s",message,head));
+            }
+        }
+        catch (MessageHeadException messageHeadException) {
+            logger.warn(messageHeadException.getMessage());
+        }
+        catch (JSONException jsonException) {
+            logger.warn(String.format("无法解析:%s,未知的消息体%s",message,body));
+        }
     }
 
     @OnError
-    public void onError(Session errorSession, Throwable error){
-        logger.error("与" + id + "的会话发生错误", error);
+    public void onError(Session session, Throwable error){
+        if (id != 0){
+            WebSocketServer.DisConnect(id);
+        }
+        logger.error(String.format("与%d的会话发生错误",id));
+    }
+
+    public void sendMessageDirect(String head, String body) {
+        String message = head + "|" + body;
+        logger.info(String.format("向客户端:%d发送了消息:%s",id, message));
+        session.getAsyncRemote().sendText(message);
+    }
+
+    public void sendFileToOne(ByteBuffer byteBuffer) {
+        session.getAsyncRemote().sendBinary(byteBuffer);
     }
 
 }
