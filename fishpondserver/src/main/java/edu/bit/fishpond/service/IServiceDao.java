@@ -8,6 +8,11 @@ import java.util.List;
 public interface IServiceDao {
 
     /**
+     * 清空数据库
+     * @return 是否清空成功
+     */
+    void clearDAO();
+    /**
      * 注册，添加新的用户
      * @param userName 新用户的用户名
      * @param password 新用户的密码

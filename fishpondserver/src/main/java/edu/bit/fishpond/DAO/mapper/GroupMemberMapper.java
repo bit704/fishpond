@@ -2,9 +2,11 @@ package edu.bit.fishpond.DAO.mapper;
 
 import edu.bit.fishpond.DAO.DO.GroupMemberDO;
 import org.apache.ibatis.annotations.*;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+@Component
 public interface GroupMemberMapper {
 
     public static final String tableName = "fishpond.groupmember";
