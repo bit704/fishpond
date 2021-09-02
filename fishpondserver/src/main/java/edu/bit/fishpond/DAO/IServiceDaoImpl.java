@@ -34,6 +34,31 @@ public class IServiceDaoImpl implements IServiceDao {
     @Autowired
     SysMessageMapper sysMessageMapper;
 
+    @Autowired
+    GroupInfoMapper groupInfoMapper;
+
+    @Autowired
+    GroupMemberMapper groupMemberMapper;
+
+    @Autowired
+    GroupMessageMapper groupMessageMapper;
+
+    @Autowired
+
+    @Override
+    public void clearDAO() {
+        userMapper.deleteAll();
+        userInfoMapper.deleteAll();
+        groupInfoMapper.deleteAll();
+        groupMemberMapper.deleteAll();
+        groupMessageMapper.deleteAll();
+        messageMapper.deleteAll();
+        sysMessageMapper.deleteAll();
+        friendRequestMapper.deleteAll();
+        friendshipMapper.deleteAll();
+        return;
+    }
+
     /**
      * 判断是否有此用户
      *
