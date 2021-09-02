@@ -9,16 +9,15 @@ import java.util.concurrent.ConcurrentMap;
 
 public class WebSocketServer {
 
-    public static ConcurrentMap<Integer, Session> idSessionMap = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<Integer, Session> idSessionMap = new ConcurrentHashMap<>();
     private static final Logger logger = LoggerFactory.getLogger(WebSocketServer.class);
 
-    public static void SendMessageTo(int id, String head, String body){
+    public static void SendMessageTo(int id, String message){
         Session session = GetSessionById(id);
         if (session == null){
             logger.error(String.format("发送失败:找不到id:%d对应的Session",id));
             return;
         }
-        String message = head + "|" + body;
         logger.info(String.format("向客户端:%d发送了消息:%s",id, message));
         session.getAsyncRemote().sendText(message);
     }
@@ -28,13 +27,20 @@ public class WebSocketServer {
     }
 
     public static void NewConnect(Session session, Integer id){
-        idSessionMap.putIfAbsent(id, session);
+        if (idSessionMap.containsKey(id)){
+            logger.warn(String.format("Id:%d已在线", id));
+        }
+
+        idSessionMap.put(id, session);
+        if (!idSessionMap.containsKey(id)){
+            logger.error(String.format("Id%d未成功记录", id));
+        }
     }
 
     public static void DisConnect(Integer id){
-        Session res = idSessionMap.remove(id);
-        if (res == null){
-            logger.error("移除失败:" + id);
+        if (!idSessionMap.containsKey(id)){
+            logger.warn(String.format("Id:%d未登录，不必断开连接",id));
         }
+        idSessionMap.remove(id);
     }
 }

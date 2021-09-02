@@ -2,7 +2,7 @@ package edu.bit.fishpond.service.entity;
 
 import com.alibaba.fastjson.annotation.JSONField;
 
-public class FriendRequestGetEntity {
+public class FriendRequestClientEntity {
 
     @JSONField(ordinal = 1)
     private int applierId;

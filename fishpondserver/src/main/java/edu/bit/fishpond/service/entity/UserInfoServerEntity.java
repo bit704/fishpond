@@ -1,12 +1,26 @@
 package edu.bit.fishpond.service.entity;
 
-public class SearchUserServerEntity {
+import com.alibaba.fastjson.annotation.JSONField;
 
+public class UserInfoServerEntity {
+
+    @JSONField
     private int userId;
+
+    @JSONField
     private String username;
+
+    @JSONField
     private String sex;
+
+    @JSONField
     private String birthday;
+
+    @JSONField
     private String region;
+
+    @JSONField
+    private String registerTime;
 
     public int getUserId() {
         return userId;
@@ -46,5 +60,13 @@ public class SearchUserServerEntity {
 
     public void setRegion(String region) {
         this.region = region;
+    }
+
+    public String getRegisterTime() {
+        return registerTime;
+    }
+
+    public void setRegisterTime(String registerTime) {
+        this.registerTime = registerTime;
     }
 }

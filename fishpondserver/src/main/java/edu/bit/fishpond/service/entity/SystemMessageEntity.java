@@ -1,13 +1,19 @@
 package edu.bit.fishpond.service.entity;
 
+import com.alibaba.fastjson.annotation.JSONField;
+
 public class SystemMessageEntity {
 
+    @JSONField(ordinal = 1)
     private int userId;
 
+    @JSONField(ordinal = 2)
     private String sendTime;
 
+    @JSONField(ordinal = 3)
     private String messageType;
 
+    @JSONField(ordinal = 4)
     private String content;
 
     public int getUserId() {

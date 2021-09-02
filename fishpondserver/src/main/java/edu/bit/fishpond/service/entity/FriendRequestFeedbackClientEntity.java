@@ -6,7 +6,7 @@ import com.alibaba.fastjson.annotation.JSONField;
  * 好友申请反馈通信实体
  * 即好友申请的接收者对好友申请的反馈（接受或拒绝）
  */
-public class FRFGetEntity {
+public class FriendRequestFeedbackClientEntity {
 
     @JSONField(ordinal = 1)
     private int senderId;// 好友申请的发送者ID
