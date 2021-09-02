@@ -22,6 +22,22 @@ public class FriendRequestDO {
      */
     private String explanation;
 
+    public int getRequester() {
+        return requester;
+    }
+
+    public int getReceiver() {
+        return receiver;
+    }
+
+    public String getRequest_time() {
+        return request_time;
+    }
+
+    public String getExplanation() {
+        return explanation;
+    }
+
     @Override
     public String toString() {
         return "FriendRequestDO{" +

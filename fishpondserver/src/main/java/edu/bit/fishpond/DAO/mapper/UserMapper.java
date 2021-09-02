@@ -21,13 +21,18 @@ public interface UserMapper {
     @Select("Select * from "
             + tableName
             + " where ${columnName} = ${columnValue}")
-    public UserDO selectBatch(@Param("columnName") String columnName,
+    public List<UserDO> selectBatch(@Param("columnName") String columnName,
                               @Param("columnValue") String columnValue);
+
+    @Select("Select * from "
+            + tableName
+            + " where uid = ${uid}")
+    public UserDO selectOneById(@Param("uid") int uid);
 
     @Insert("insert into "
             + tableName
             + sql_insertColumns
-            + " values (#{password}, #{question}, #{answer}) ")
+            + " values ( #{password}, #{question}, #{answer}) ")
     public int insertOne(@Param("password") String password,
                          @Param("question") String question,
                          @Param("answer") String answer);
@@ -59,5 +64,13 @@ public interface UserMapper {
      */
     @Select("select setval('fishpond.user_uid_seq',#{start},false)")
     public int resetSeq(@Param("start") int start);
+
+    /**
+     * 获取下一个序列号
+     * @return 下一个序列号
+     */
+    @Select("select last_value from fishpond.user_uid_seq")
+    //@Select("select nextval('fishpond.user_uid_seq')")
+    public int getLastSqValue();
 
 }

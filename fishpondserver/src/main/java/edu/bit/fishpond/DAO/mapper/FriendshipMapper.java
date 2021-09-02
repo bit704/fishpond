@@ -2,9 +2,11 @@ package edu.bit.fishpond.DAO.mapper;
 
 import edu.bit.fishpond.DAO.DO.FriendshipDO;
 import org.apache.ibatis.annotations.*;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+@Component
 public interface FriendshipMapper {
 
     public static final String tableName = "fishpond.firendship";
@@ -15,6 +17,11 @@ public interface FriendshipMapper {
     @Select("select * from  "
             + tableName)
     public List<FriendshipDO> selectAll();
+
+    @Select("select * from "
+            + tableName
+            + " where uid1 = #{uid} or uid2 = #{uid}")
+    public List<FriendshipDO> selectById(@Param("uid") int uid);
 
     @Select("Select * from "
             + tableName

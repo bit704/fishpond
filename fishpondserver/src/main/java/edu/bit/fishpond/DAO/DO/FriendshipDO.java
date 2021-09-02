@@ -17,6 +17,18 @@ public class FriendshipDO {
      */
     private String friend_time;
 
+    public int getUid1() {
+        return uid1;
+    }
+
+    public int getUid2() {
+        return uid2;
+    }
+
+    public String getFriend_time() {
+        return friend_time;
+    }
+
     @Override
     public String toString() {
         return "FriendshipDO{" +
