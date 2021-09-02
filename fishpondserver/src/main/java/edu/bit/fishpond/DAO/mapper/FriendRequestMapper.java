@@ -2,9 +2,11 @@ package edu.bit.fishpond.DAO.mapper;
 
 import edu.bit.fishpond.DAO.DO.FriendRequestDO;
 import org.apache.ibatis.annotations.*;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+@Component
 public interface FriendRequestMapper {
 
     public static final String tableName = "fishpond.friendrequest";
@@ -15,6 +17,11 @@ public interface FriendRequestMapper {
     @Select("select * from  "
             + tableName)
     public List<FriendRequestDO> selectAll();
+
+    @Select("select * from  "
+            + tableName
+            + " where receiver = #{receiver}")
+    public List<FriendRequestDO> selectByReceiver(@Param("receiver") int receiver);
 
     @Select("Select * from "
             + tableName
@@ -36,6 +43,12 @@ public interface FriendRequestMapper {
             + " where ${columnName} = ${columnValue}")
     public int deleteBatch(@Param("columnName") String columnName,
                            @Param("columnValue") String columnValue);
+
+    @Delete("delete from "
+            + tableName
+            + " where requester = #{requester} and receiver = #{receiver}")
+    public int deleteByPK(@Param("requester") int requester,
+                          @Param("receiver") int receiver);
 
     @Update("truncate table "
             + tableName)

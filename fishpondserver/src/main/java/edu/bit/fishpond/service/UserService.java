@@ -3,10 +3,10 @@ package edu.bit.fishpond.service;
 import com.alibaba.fastjson.JSON;
 import edu.bit.fishpond.server.WebSocketServer;
 import edu.bit.fishpond.service.entity.*;
+import edu.bit.fishpond.utils.DAOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.text.DateFormat;
@@ -17,14 +17,14 @@ import java.util.List;
 public class UserService {
 
     @Autowired
-    public UserService(@Qualifier("serviceDao") IServiceDao userDao){
+    public UserService(IServiceDao userDao){
         this.userDao = userDao;
     }
 
     private final IServiceDao userDao;
     private final Logger logger = LoggerFactory.getLogger(UserService.class);
 
-    public String register(RegisterClientEntity registerClientEntity){
+    public String register(RegisterClientEntity registerClientEntity) throws DAOException {
         String userName = registerClientEntity.getUserName();
         String password = registerClientEntity.getPassword();
         String securityQuestion = registerClientEntity.getSecurityQuestion();
@@ -37,7 +37,7 @@ public class UserService {
         return JSON.toJSONString(userIdEntity);
     }
 
-    public String friendRequestHandler(FriendRequestGetEntity friendRequestGetEntity){
+    public String friendRequestHandler(FriendRequestGetEntity friendRequestGetEntity) throws DAOException {
         int applierId = friendRequestGetEntity.getApplierId();
         int recipientId = friendRequestGetEntity.getRecipientId();
         String explain = friendRequestGetEntity.getExplain();
@@ -70,7 +70,7 @@ public class UserService {
         return sendMessageBody;
     }
 
-    public boolean login(LoginClientEntity loginClientEntity){
+    public boolean login(LoginClientEntity loginClientEntity) throws DAOException {
         int loginId = loginClientEntity.getLoginUserId();
         String passwordHash = loginClientEntity.getPasswordHash();
         boolean queryResult = userDao.checkPassword(loginId, passwordHash);
@@ -131,7 +131,7 @@ public class UserService {
         return JSON.toJSONString(friendRequestList);
     }
 
-    public String FriendRequestFeedbackHandler(FRFGetEntity frfGetEntity){
+    public String FriendRequestFeedbackHandler(FRFGetEntity frfGetEntity) throws DAOException {
         int senderId = frfGetEntity.getSenderId();
         int recipientId = frfGetEntity.getRecipientId();
         boolean requestResult = frfGetEntity.getResult();

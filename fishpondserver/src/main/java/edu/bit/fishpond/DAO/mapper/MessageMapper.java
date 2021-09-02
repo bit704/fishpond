@@ -2,9 +2,11 @@ package edu.bit.fishpond.DAO.mapper;
 
 import edu.bit.fishpond.DAO.DO.MessageDO;
 import org.apache.ibatis.annotations.*;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+@Component
 public interface MessageMapper {
 
     public static final String tableName = "fishpond.message";
@@ -16,11 +18,21 @@ public interface MessageMapper {
             + tableName)
     public List<MessageDO> selectAll();
 
-    @Select("Select * from "
+    @Select("select * from "
             + tableName
-            + " where ${columnName} = ${columnValue}")
-    public MessageDO selectBatch(@Param("columnName") String columnName,
-                                 @Param("columnValue") String columnValue);
+            + " where receiver = #{receiver} ")
+    public List<MessageDO> selectByReceiver(@Param("receiver") int receiver);
+
+    @Select("select * from "
+            + tableName
+            + " where sender = #{sender} ")
+    public List<MessageDO> selectBySender(@Param("sender") int sender);
+
+    @Select("select * from "
+            + tableName
+            + " where receiver = #{receiver} and send_time >= #{send_time}")
+    public List<MessageDO> selectByReceiverBeforeTime(@Param("receiver") int receiver,
+                                                     @Param("send_time") String send_time);
 
     @Insert("insert into "
             + tableName

@@ -47,6 +47,42 @@ public class UserInfoDO {
      */
     private Boolean real;
 
+    public int getUid() {
+        return uid;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getSex() {
+        return sex;
+    }
+
+    public String getBirthday() {
+        return birthday;
+    }
+
+    public String getRegion() {
+        return region;
+    }
+
+    public Boolean getState() {
+        return state;
+    }
+
+    public String getCreate_time() {
+        return create_time;
+    }
+
+    public String getLast_offline() {
+        return last_offline;
+    }
+
+    public Boolean getReal() {
+        return real;
+    }
+
     @Override
     public String toString() {
         return "UserInfoDO{" +

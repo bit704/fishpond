@@ -1,10 +1,10 @@
 package edu.bit.fishpond.service;
 
+import edu.bit.fishpond.utils.DAOException;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-@Component
 public interface IServiceDao {
 
     /**
@@ -15,20 +15,20 @@ public interface IServiceDao {
      * @param answer 新用户密保问题的答案
      * @return 新用户的ID
      */
-    int recordNewUser(String userName, String password, String securityQuestion, String answer);
+    int recordNewUser(String userName, String password, String securityQuestion, String answer) throws DAOException;
 
     /**
      * 通过用户Id查询其在线状态
      * @param userId 要查询的用户的Id
      * @return 在线状态
      */
-    boolean queryOnlineStatusById(int userId);
+    boolean queryOnlineStatusById(int userId) throws DAOException;
 
     /**
      * 更新用户的在线状态（直接取反即可）
      * @param userId 用户id
      */
-    void updateOnlineStatusById(int userId);
+    void updateOnlineStatusById(int userId) throws DAOException;
 
     /**
      * 好友申请，添加新的好友申请
@@ -37,7 +37,7 @@ public interface IServiceDao {
      * @param explain 附加信息
      * @param sendTime 申请发送时间
      */
-    void recordFriendRequest(int applierId, int recipientId, String explain, String sendTime);
+    void recordFriendRequest(int applierId, int recipientId, String explain, String sendTime) throws DAOException;
 
     /**
      * 检查用户id和密码是否匹配
@@ -74,7 +74,7 @@ public interface IServiceDao {
      * @param userId2 用户2
      * @param beFriendTime 成为好友的时间
      */
-    void recordFriendship(int userId1, int userId2, String beFriendTime);
+    void recordFriendship(int userId1, int userId2, String beFriendTime) throws DAOException;
 
     /**
      * 新的系统消息
@@ -83,14 +83,14 @@ public interface IServiceDao {
      * @param messageType 消息类型
      * @param content 消息内容
      */
-    void recordSystemMessage(int userId, String sendTime, String messageType, String content);
+    void recordSystemMessage(int userId, String sendTime, String messageType, String content) throws DAOException;
 
     /**
      * 删除指定申请者和接收者的好友申请
      * @param applierId 申请者id
      * @param recipientId 接收者id
      */
-    void deleteFriendRequest(int applierId, int recipientId);
+    void deleteFriendRequest(int applierId, int recipientId) throws DAOException;
 
     /**
      * 通过ID获取该用户的好友列表及好友信息
@@ -120,6 +120,6 @@ public interface IServiceDao {
      * @param sendTime 发送时间
      * @param messageContent 消息内容
      */
-    void recordMessage(int senderId, int recipientId, String messageType, String sendTime, String messageContent);
+    void recordMessage(int senderId, int recipientId, String messageType, String sendTime, String messageContent) throws DAOException;
 
 }

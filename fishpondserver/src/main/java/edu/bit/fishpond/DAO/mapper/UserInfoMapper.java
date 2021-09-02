@@ -1,5 +1,6 @@
 package edu.bit.fishpond.DAO.mapper;
 
+import edu.bit.fishpond.DAO.DO.UserDO;
 import edu.bit.fishpond.DAO.DO.UserInfoDO;
 import org.apache.ibatis.annotations.*;
 import org.springframework.stereotype.Component;
@@ -18,11 +19,33 @@ public interface UserInfoMapper {
             + tableName)
     public List<UserInfoDO> selectAll();
 
+    @Select("select name from "
+            + tableName
+            + " where uid = ${uid}")
+    public String selectName(@Param("uid") int uid);
+
+    @Select("select state from "
+            + tableName
+            + " where uid = ${uid}")
+    public boolean selectState(@Param("uid") int uid);
+
+
     @Select("Select * from "
             + tableName
             + " where ${columnName} = ${columnValue}")
-    public UserInfoDO selectBatch(@Param("columnName") String columnName,
-                                  @Param("columnValue") String columnValue);
+    public List<UserInfoDO> selectBatch(@Param("columnName") String columnName,
+                                        @Param("columnValue") String columnValue);
+
+    @Select("Select * from "
+            + tableName
+            + " where uid = ${uid}")
+    public UserInfoDO selectOneById(@Param("uid") int uid);
+
+    @Select("select * from "
+            + tableName
+    + " where name like '%${subName}%'")
+    public List<UserInfoDO> selectBySubName(@Param("subName") String subName);
+
 
     @Insert("insert into "
             + tableName
@@ -41,9 +64,9 @@ public interface UserInfoMapper {
     @Update("update "
             + tableName
             + " set ${columnName} = ${columnValue} where uid = #{uid}")
-    public boolean updateOne(@Param("columnName") String columnName,
-                             @Param("columnValue") String columnValue,
-                             @Param("uid") int uid);
+    public int updateOne(@Param("columnName") String columnName,
+                         @Param("columnValue") String columnValue,
+                         @Param("uid") int uid);
 
     @Delete("delete from "
             + tableName

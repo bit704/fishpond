@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
 import edu.bit.fishpond.service.entity.*;
 import edu.bit.fishpond.service.UserService;
+import edu.bit.fishpond.utils.DAOException;
 import edu.bit.fishpond.utils.MessageHeadException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -120,6 +121,9 @@ public class WebSocketConnect {
         }
         catch (JSONException jsonException) {
             logger.warn(String.format("无法解析:%s,未知的消息体%s",message,body));
+        }
+        catch (DAOException daoException) {
+            return;
         }
     }
 

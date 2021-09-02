@@ -58,7 +58,7 @@ create table fishpond.message(
 sender INTEGER references fishpond.user(uid),
 receiver INTEGER references fishpond.user(uid),
 send_time DATE NOT NULL,
-mtype TINYINT,
+mtype CHAR(1),
 content TEXT NOT NULL
 );
 
@@ -66,7 +66,7 @@ create table fishpond.groupmessage(
 sender INTEGER references fishpond.user(uid),
 receiver INTEGER references fishpond.groupinfo(gid),
 send_time DATE NOT NULL,
-mtype TINYINT,
+mtype CHAR(1),
 content TEXT NOT NULL
 );
 
@@ -81,7 +81,7 @@ primary key(gid,memberID)
 create table fishpond.sysmessage(
 uid INTEGER references fishpond.user(uid),
 send_time DATE NOT NULL,
-mtype TINYINT,
+mtype CHAR(1),
 content TEXT NOT NULL
 );
  

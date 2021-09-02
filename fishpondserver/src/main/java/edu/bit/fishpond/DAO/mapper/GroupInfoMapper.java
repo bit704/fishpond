@@ -58,4 +58,11 @@ public interface GroupInfoMapper {
      */
     @Select("select setval('fishpond.groupinfo_uid_seq',#{start},false)")
     public int resetSeq(@Param("start") int start);
+
+    /**
+     * 获取下一个序列号
+     * @return 下一个序列号
+     */
+    @Select("select last_value from fishpond.groupinfo_uid_seq")
+    public int getLastSqValue();
 }
