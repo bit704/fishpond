@@ -43,7 +43,6 @@ public class IServiceDaoImpl implements IServiceDao {
     @Autowired
     GroupMessageMapper groupMessageMapper;
 
-    @Autowired
 
     @Override
     public void clearDAO() {
