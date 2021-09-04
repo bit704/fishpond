@@ -10,9 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Service("UserService")
 public class UserService {
@@ -52,7 +50,7 @@ public class UserService {
         String explain = entity.getExplain();
         LocalDateTime currentTime = LocalDateTime.now();
         boolean onlineStatus = serviceDao.queryOnlineStatusById(recipientId);
-        String sendMessageBody = "";
+        String sendMessageBody;
 
         //添加新的好友申请
         serviceDao.recordFriendRequest(applierId, recipientId,explain, currentTime.toString());
@@ -187,7 +185,7 @@ public class UserService {
 
             }
             //如果接收人在线
-            if (true){
+            if (recipientOnlineStatus){
                 //获取新的好友，即申请人的信息
                 UserInfoServerEntity userInfo = getUserInfoById(senderId);
                 sendMessageBody = JSON.toJSONString(userInfo);
@@ -324,26 +322,6 @@ public class UserService {
         String sendMessageBody = JSON.toJSONString(messageEntityList);
         serverMessageList.add(new ServerMessage(0, "UnreadMessage", sendMessageBody));
         return serverMessageList;
-    }
-
-    public ServiceResult getAllMessageBetween(PersonMessageClientEntity entity){
-        ServiceResult result = new ServiceResult();
-        Map<Integer, String> map = new HashMap<>();
-
-        int id1 = entity.getUserId1();
-        int id2 = entity.getUserId2();
-
-        List<String> queryResult = serviceDao.queryAllMessageBetween(id1, id2);
-
-        List<MessageEntity> messageList = getMessageEntityList(queryResult);
-
-        String sendMessageBody = JSON.toJSONString(messageList);
-        result.setSendMessage(true);
-        map.put(0, "MessageBetween|" + sendMessageBody);
-        result.setSenderMessageMap(map);
-
-        return result;
-
     }
 
     public List<ServerMessage> getAllMessageBetweenHandler(PersonMessageClientEntity entity) {
