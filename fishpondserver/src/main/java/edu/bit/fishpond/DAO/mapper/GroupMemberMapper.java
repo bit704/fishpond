@@ -24,6 +24,11 @@ public interface GroupMemberMapper {
     public GroupMemberDO selectBatch(@Param("columnName") String columnName,
                                      @Param("columnValue") String columnValue);
 
+    @Select("select distinct(gid) from "
+            + tableName
+            + " where memberID = #{memberID}")
+    public List<Integer> selectGroupByUser(@Param("memberID") int memberID);
+
     @Insert("insert into "
             + tableName
             + sql_insertColumns

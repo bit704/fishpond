@@ -23,6 +23,15 @@ public interface MessageMapper {
             + " where receiver = #{receiver} ")
     public List<MessageDO> selectByReceiver(@Param("receiver") int receiver);
 
+    // todo: 这个sql需要优化
+    @Select("select * from "
+            + tableName
+            + " where ((receiver = #{receiver} and sender = #{sender}) or (receiver = #{sender} and sender = #{receiver}))"
+            + " and send_time = (select max(send_time) from "
+            + tableName
+            + " where (receiver = #{receiver} and sender = #{sender}) or (receiver = #{sender} and sender = #{receiver}) )")
+    public MessageDO selectByPartnerLatest(@Param("sender") int sender,@Param("receiver") int receiver);
+
     @Select("select * from "
             + tableName
             + " where sender = #{sender} ")

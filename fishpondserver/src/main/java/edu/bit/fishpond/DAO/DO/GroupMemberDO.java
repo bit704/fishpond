@@ -22,6 +22,22 @@ public class GroupMemberDO {
      */
     private String join_time;
 
+    public int getGid() {
+        return gid;
+    }
+
+    public int getMemberID() {
+        return memberID;
+    }
+
+    public int getInvitorID() {
+        return invitorID;
+    }
+
+    public String getJoin_time() {
+        return join_time;
+    }
+
     @Override
     public String toString() {
         return "GroupMemberDO{" +

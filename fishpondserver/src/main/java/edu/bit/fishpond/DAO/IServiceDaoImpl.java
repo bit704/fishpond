@@ -89,17 +89,22 @@ public class IServiceDaoImpl implements IServiceDao {
      * @param messageDOList
      * @return
      */
-    private List<String> message2String(List<MessageDO> messageDOList) {
+    private List<String> messages2Strings(List<MessageDO> messageDOList) {
         List<String> result = new LinkedList<>();
         for (MessageDO messageDO : messageDOList) {
-            StringJoiner message = new StringJoiner("#");
-            message.add(String.valueOf(messageDO.getSender()));
-            message.add(messageDO.getMtype());
-            message.add(messageDO.getSend_time());
-            message.add(messageDO.getContent());
-            result.add(message.toString());
+            result.add(message2String(messageDO));
         }
         return result;
+    }
+
+    private String message2String(MessageDO messageDO) {
+        StringJoiner message = new StringJoiner("#");
+        message.add(String.valueOf(messageDO.getSender()));
+        message.add(String.valueOf(messageDO.getReceiver()));
+        message.add(messageDO.getMtype());
+        message.add(messageDO.getSend_time());
+        message.add(messageDO.getContent());
+        return message.toString();
     }
 
     @Override
@@ -172,7 +177,7 @@ public class IServiceDaoImpl implements IServiceDao {
         //获取用户上次离线时间
         LocalDateTime last_offline = LocalDateTime.parse(userInfoDO.getLast_offline());
         List<MessageDO> messageDOList = messageMapper.selectByReceiverBeforeTime(recipientId, last_offline.toString());
-        return message2String(messageDOList);
+        return messages2Strings(messageDOList);
     }
 
     @Override
@@ -181,7 +186,7 @@ public class IServiceDaoImpl implements IServiceDao {
         List<MessageDO> messageDOList = new LinkedList<>();
         messageDOList.addAll(messageMapper.selectByReceiver(userId));
         messageDOList.addAll(messageMapper.selectBySender(userId));
-        return message2String(messageDOList);
+        return messages2Strings(messageDOList);
     }
 
     @Override
@@ -223,7 +228,6 @@ public class IServiceDaoImpl implements IServiceDao {
         int deleteNum = friendRequestMapper.deleteByPK(applierId,recipientId);
         if(deleteNum != 1) throw new DAOException("删除好友申请失败");
         return;
-
     }
 
     @Override
@@ -239,13 +243,7 @@ public class IServiceDaoImpl implements IServiceDao {
                 friendList.add(friendshipDO.getUid1());
             }
         }
-        List<String> result = new LinkedList<>();
-        //查询用户名
-        for(Integer friendId : friendList) {
-            String friendName = userInfoMapper.selectName(friendId);
-            result.add(String.valueOf(friendId) + "#" + friendName);
-        }
-        return new ArrayList<>();
+        return friendList;
     }
 
     @Override
@@ -288,21 +286,45 @@ public class IServiceDaoImpl implements IServiceDao {
 
     @Override
     public List<String> queryLatestMessage(int userId) {
-        return null;
+        List<FriendshipDO> friendshipDOList = friendshipMapper.selectById(userId);
+        List<Integer> friendList = new LinkedList<>();
+        for(FriendshipDO friendshipDO : friendshipDOList) {
+            if(friendshipDO.getUid1() == userId) {
+                friendList.add(friendshipDO.getUid2());
+            }
+            else {
+                friendList.add(friendshipDO.getUid1());
+            }
+        }
+        List<String> result = new ArrayList<>();
+        for(Integer fid : friendList) {
+            result.add(message2String(messageMapper.selectByPartnerLatest(fid,userId)));
+        }
+        return result;
+
     }
 
     @Override
-    public void recordNewMember(int groupId, int userId, int invitorId, String inTime) {
-
+    public void recordNewMember(int groupId, int userId, int invitorId, String inTime) throws DAOException {
+        int insertNum = groupMemberMapper.insertOne(groupId,userId,invitorId,inTime);
+        if(insertNum != 1) throw new DAOException("添加群成员失败");
+        return;
     }
 
     @Override
     public List<String> queryGroupByUserId(int userId) {
-        return null;
+        List<Integer> integers = groupMemberMapper.selectGroupByUser(userId);
+        List<String> result = new ArrayList<>();
+        for(Integer gid : integers) {
+            result.add(gid + "#" + groupInfoMapper.selectNameById(gid));
+        }
+        return result;
     }
 
     @Override
     public void deleteUser(int userId) {
-
+        userInfoMapper.deleteOne(userId);
+        userMapper.deleteOne(userId);
+        return;
     }
 }

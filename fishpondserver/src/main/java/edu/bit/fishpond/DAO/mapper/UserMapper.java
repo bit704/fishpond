@@ -22,7 +22,7 @@ public interface UserMapper {
             + tableName
             + " where ${columnName} = ${columnValue}")
     public List<UserDO> selectBatch(@Param("columnName") String columnName,
-                              @Param("columnValue") String columnValue);
+                                    @Param("columnValue") String columnValue);
 
     @Select("Select * from "
             + tableName
@@ -43,6 +43,11 @@ public interface UserMapper {
     public boolean updateOne(@Param("columnName") String columnName,
                              @Param("columnValue") String columnValue,
                              @Param("uid") int uid);
+
+    @Delete("delete from "
+            + tableName
+            + " where uid = #{uid}")
+    public int deleteOne(@Param("uid") int uid);
 
     @Delete("delete from "
             + tableName
@@ -67,6 +72,7 @@ public interface UserMapper {
 
     /**
      * 获取下一个序列号
+     *
      * @return 下一个序列号
      */
     @Select("select last_value from fishpond.user_uid_seq")
