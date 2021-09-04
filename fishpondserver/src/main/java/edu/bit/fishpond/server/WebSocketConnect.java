@@ -176,9 +176,11 @@ public class WebSocketConnect {
         }
         catch (JSONException jsonException) {
             logger.warn(String.format("无法解析:%s,未知的消息体%s",message,body));
+            jsonException.printStackTrace();
         }
         catch (IOException ioException){
             logger.error("ioException");
+            ioException.printStackTrace();
         }
         catch (DAOException daoException) {
             ErrorEntity errorEntity = new ErrorEntity();
@@ -186,6 +188,7 @@ public class WebSocketConnect {
             sendMessageBody = JSON.toJSONString(errorEntity);
             sendMessageHead = "Error";
             sendMessageDirect(sendMessageHead, sendMessageBody);
+            daoException.printStackTrace();
         }
     }
 
@@ -196,6 +199,14 @@ public class WebSocketConnect {
         }
         else {
             logger.error(String.format("与%s的会话发生错误",session.getId()));
+//            UserIdEntity userIdEntity = new UserIdEntity();
+//            userIdEntity.setUserId(id);
+//            try {
+//                connectService.offLine(userIdEntity);
+//            }
+//            catch (DAOException daoException){
+//                daoException.printStackTrace();
+//            }
         }
         error.printStackTrace();
     }

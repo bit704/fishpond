@@ -6,6 +6,7 @@ import edu.bit.fishpond.utils.DAOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -16,8 +17,9 @@ import java.util.List;
 public class UserService {
 
     @Autowired
-    public UserService(IServiceDao serviceDao){
-        this.serviceDao = serviceDao;
+    public UserService(@Qualifier("IServiceDaoImpl") IServiceDao iServiceDao){
+        this.serviceDao = iServiceDao;
+        serviceDao.clearDAO();
     }
 
     private final IServiceDao serviceDao;
@@ -50,10 +52,11 @@ public class UserService {
         String explain = entity.getExplain();
         LocalDateTime currentTime = LocalDateTime.now();
         boolean onlineStatus = serviceDao.queryOnlineStatusById(recipientId);
+        logger.info("用户:" + recipientId + "的在线状态为" + onlineStatus);
         String sendMessageBody;
 
         //添加新的好友申请
-        serviceDao.recordFriendRequest(applierId, recipientId,explain, currentTime.toString());
+        serviceDao.recordFriendRequest(applierId, recipientId,currentTime.toString(),explain);
 
         //如果接收者在线
         if (onlineStatus){
@@ -403,8 +406,8 @@ public class UserService {
     private UserInfoServerEntity getUserInfoById(int id){
         UserInfoServerEntity userInfoServerEntity = new UserInfoServerEntity();
         String queryLine = serviceDao.queryUserInfoById(id);
-        logger.info(String.valueOf(id));
-        logger.info(queryLine);
+        logger.info("queryUserInfoById id:" + id);
+        logger.info("queryUserInfoById result:" + queryLine);
         if (!queryLine.isEmpty()){
             String[] queryDataArray = queryLine.split("#",-1);
             if (queryDataArray.length == 6){
