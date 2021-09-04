@@ -146,10 +146,10 @@ public class IServiceDaoImpl implements IServiceDao {
     public void updateOnlineStatusById(int userId) throws DAOException {
         if (!hadUser(userId)) throw new DAOException("没有此用户");
         boolean state = userInfoMapper.selectState(userId);
-        if (state == false) {
+        if (state == true) {
             LocalDateTime now = LocalDateTime.now();
             userInfoMapper.updateOne("last_offline", addQuotes(now.toString()), userId);
-            //标记现在的时间为用户的离线时间
+            //标记现在的时间为用户的上次离线时间
         }
         state = !state;
         int updateNum = userInfoMapper.updateOne("state", String.valueOf(state), userId);
@@ -193,7 +193,7 @@ public class IServiceDaoImpl implements IServiceDao {
 
     @Override
     public List<String> queryAllMessageBetween(int userId1, int userId2) {
-        return null;
+        return messages2Strings(messageMapper.selectByPartner(userId1,userId2));
     }
 
 
@@ -228,7 +228,7 @@ public class IServiceDaoImpl implements IServiceDao {
     @Override
     public void deleteFriendRequest(int applierId, int recipientId) throws DAOException {
         int deleteNum = friendRequestMapper.deleteByPK(applierId,recipientId);
-        if(deleteNum != 1) throw new DAOException("删除好友申请失败");
+        //if(deleteNum != 1) throw new DAOException("删除好友申请失败");
         return;
     }
 
