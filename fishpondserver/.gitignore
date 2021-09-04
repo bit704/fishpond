@@ -2,10 +2,13 @@
 ### Example user template
 
 # IntelliJ project files
+# IntelliJ project files
 .idea
-.mvn
+/.mvn/
 *.iml
-out
-target
+/out/
+/target/
 gen
 /src/main/resources/application.properties
+/HELP.md
+
