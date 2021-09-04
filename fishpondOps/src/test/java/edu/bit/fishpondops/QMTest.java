@@ -5,7 +5,7 @@ import edu.bit.fishpondops.service.QueryService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class MockTest extends FishpondOpsApplicationTests{
+public class QMTest extends FishpondOpsApplicationTests{
 
     @Autowired
     MockService mockService;

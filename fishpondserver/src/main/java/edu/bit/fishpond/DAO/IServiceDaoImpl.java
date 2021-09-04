@@ -123,7 +123,7 @@ public class IServiceDaoImpl implements IServiceDao {
                 null,
                 false,
                 now.toString(),
-                null,
+                "null",
                 true);
         if (insertNum2 != 1) {
             throw new DAOException("注册新用户失败");
@@ -146,10 +146,10 @@ public class IServiceDaoImpl implements IServiceDao {
     public void updateOnlineStatusById(int userId) throws DAOException {
         if (!hadUser(userId)) throw new DAOException("没有此用户");
         boolean state = userInfoMapper.selectState(userId);
-        if (state ==  true) {
+        if (state == true) {
             LocalDateTime now = LocalDateTime.now();
             userInfoMapper.updateOne("last_offline", addQuotes(now.toString()), userId);
-            //标记现在的时间为用户的离线时间
+            //标记现在的时间为用户的上次离线时间
         }
         state = !state;
         int updateNum = userInfoMapper.updateOne("state", String.valueOf(state), userId);

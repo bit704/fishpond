@@ -9,7 +9,7 @@ import java.util.List;
 @Component
 public interface FriendshipMapper {
 
-    public static final String tableName = "fishpond.firendship";
+    public static final String tableName = "fishpond.friendship";
 
     public static final String sql_insertColumns =
             "(uid1, uid2, friend_time)";

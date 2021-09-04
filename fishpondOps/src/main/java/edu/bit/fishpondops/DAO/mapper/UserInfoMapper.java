@@ -31,9 +31,8 @@ public interface UserInfoMapper {
 
     @Select("Select * from "
             + tableName
-            + " where ${columnName} = ${columnValue}")
-    public List<UserInfoDO> selectBatch(@Param("columnName") String columnName,
-                                        @Param("columnValue") String columnValue);
+            + " limit #{num}")
+    public List<UserInfoDO> selectBatch(@Param("num") int num);
 
     @Select("Select * from "
             + tableName

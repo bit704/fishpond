@@ -39,7 +39,7 @@ public interface MessageMapper {
 
     @Select("select * from "
             + tableName
-            +  " where ((receiver = #{receiver} and sender = #{sender}) or (receiver = #{sender} and sender = #{receiver}))")
+            + " where ((receiver = #{receiver} and sender = #{sender}) or (receiver = #{sender} and sender = #{receiver}))")
     public List<MessageDO> selectByPartner(@Param("sender") int sender,@Param("receiver") int receiver);
 
     @Select("select * from "

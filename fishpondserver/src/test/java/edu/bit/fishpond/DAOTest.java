@@ -1,7 +1,9 @@
 package edu.bit.fishpond;
 
 import edu.bit.fishpond.DAO.DO.MessageDO;
+import edu.bit.fishpond.DAO.IServiceDaoImpl;
 import edu.bit.fishpond.DAO.mapper.*;
+import edu.bit.fishpond.utils.DAOException;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +31,9 @@ public class DAOTest extends FishpondApplicationTests {
 
     @Autowired
     FriendRequestMapper friendRequestMapper;
+
+    @Autowired
+    IServiceDaoImpl iServiceDao;
 
     @Test
     public void testUserInfo() {
@@ -115,6 +120,11 @@ public class DAOTest extends FishpondApplicationTests {
         friendRequestMapper.deleteAll();
         System.out.println(friendRequestMapper.insertOne(10000000,10000001,"2021-09-02 10:57:07",""));
         System.out.println(friendRequestMapper.deleteByPK(10000000,10000001));
+    }
+
+    @Test
+    public void testTrival() throws DAOException {
+        System.out.println(iServiceDao.checkPassword(10000031,"1"));
     }
 
 }
