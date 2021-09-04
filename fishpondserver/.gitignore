@@ -3,7 +3,9 @@
 
 # IntelliJ project files
 .idea
+.mvn
 *.iml
 out
+target
 gen
-!/src/main/resources/application.properties
+/src/main/resources/application.properties
