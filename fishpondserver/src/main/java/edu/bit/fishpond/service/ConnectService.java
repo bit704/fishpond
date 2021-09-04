@@ -6,30 +6,34 @@ import edu.bit.fishpond.utils.DAOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 @Service("ConnectService")
 public class ConnectService {
 
-    private final IServiceDao serviceDao;
+    private final IServiceDao iServiceDao;
     private final Logger logger = LoggerFactory.getLogger(ConnectService.class);
 
     @Autowired
-    public ConnectService(IServiceDao serviceDao){
-        this.serviceDao = serviceDao;
+    public ConnectService(@Qualifier("IServiceDaoImpl") IServiceDao iServiceDao){
+        this.iServiceDao = iServiceDao;
     }
 
     public boolean login(LoginClientEntity loginClientEntity) throws DAOException {
         int loginId = loginClientEntity.getLoginUserId();
         String passwordHash = loginClientEntity.getPasswordHash();
-        boolean queryResult = serviceDao.checkPassword(loginId, passwordHash);
+        boolean queryResult = iServiceDao.checkPassword(loginId, passwordHash);
         if (queryResult){
-            boolean queryResult2 = serviceDao.queryOnlineStatusById(loginId);
+            boolean queryResult2 = iServiceDao.queryOnlineStatusById(loginId);
+            // 如果已经在线，则不能登录
             if (queryResult2){
+                logger.warn("用户已在线");
                 return false;
             }
             else {
-                serviceDao.updateOnlineStatusById(loginId);
+                iServiceDao.updateOnlineStatusById(loginId);
+                logger.info("登录后," + loginId + "的在线状态为" + iServiceDao.queryOnlineStatusById(loginId));
             }
 
         }
@@ -39,6 +43,6 @@ public class ConnectService {
 
     public void offLine(UserIdEntity userIdEntity) throws DAOException {
         int offLineId = userIdEntity.getUserId();
-        serviceDao.updateOnlineStatusById(offLineId);
+        iServiceDao.updateOnlineStatusById(offLineId);
     }
 }
