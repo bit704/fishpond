@@ -1,6 +1,5 @@
 package edu.bit.fishpondops.service;
 
-import edu.bit.fishpondops.DAO.DO.UserInfoDO;
 import edu.bit.fishpondops.DAO.mapper.UserInfoMapper;
 import edu.bit.fishpondops.DAO.mapper.UserMapper;
 import edu.bit.fishpondops.utils.GenerateRandomInfo;
@@ -8,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Component
 public class MockService {
@@ -21,10 +19,6 @@ public class MockService {
 
     @Autowired
     GenerateRandomInfo generateRandomInfo;
-
-    public List<UserInfoDO> getAllUsers() {
-        return userInfoMapper.selectAll();
-    }
 
     /**
      * @param num 数量
@@ -46,6 +40,5 @@ public class MockService {
         }
         return;
     }
-
 
 }
