@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.StringJoiner;
@@ -126,6 +127,11 @@ public class IServiceDaoImpl implements IServiceDao {
     }
 
     @Override
+    public int recordNewGroup(String groupName, int creatorId, String createTime) {
+        return 0;
+    }
+
+    @Override
     public boolean queryOnlineStatusById(int userId) throws DAOException {
         if (!hadUser(userId)) throw new DAOException("没有此用户");
         return userInfoMapper.selectState(userId);
@@ -178,6 +184,11 @@ public class IServiceDaoImpl implements IServiceDao {
         return message2String(messageDOList);
     }
 
+    @Override
+    public List<String> queryAllMessageBetween(int userId1, int userId2) {
+        return null;
+    }
+
 
     @Override
     public List<String> queryFriendRequest(int recipientId) {
@@ -216,7 +227,7 @@ public class IServiceDaoImpl implements IServiceDao {
     }
 
     @Override
-    public List<String> queryFriendshipById(int senderId) {
+    public List<Integer> queryFriendshipById(int senderId) {
         //查询好友列表
         List<FriendshipDO> friendshipDOList = friendshipMapper.selectById(senderId);
         List<Integer> friendList = new LinkedList<>();
@@ -234,7 +245,7 @@ public class IServiceDaoImpl implements IServiceDao {
             String friendName = userInfoMapper.selectName(friendId);
             result.add(String.valueOf(friendId) + "#" + friendName);
         }
-        return result;
+        return new ArrayList<>();
     }
 
     @Override
@@ -273,5 +284,25 @@ public class IServiceDaoImpl implements IServiceDao {
         int insertNum = messageMapper.insertOne(senderId,recipientId,sendTime,messageType,messageContent);
         if(insertNum != 1) throw new DAOException("插入失败");
         return;
+    }
+
+    @Override
+    public List<String> queryLatestMessage(int userId) {
+        return null;
+    }
+
+    @Override
+    public void recordNewMember(int groupId, int userId, int invitorId, String inTime) {
+
+    }
+
+    @Override
+    public List<String> queryGroupByUserId(int userId) {
+        return null;
+    }
+
+    @Override
+    public void deleteUser(int userId) {
+
     }
 }

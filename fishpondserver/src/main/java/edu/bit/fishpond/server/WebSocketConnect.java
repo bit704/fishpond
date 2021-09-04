@@ -3,6 +3,9 @@ package edu.bit.fishpond.server;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
+import edu.bit.fishpond.service.ConnectService;
+import edu.bit.fishpond.service.ServerMessage;
+import edu.bit.fishpond.service.ServiceResult;
 import edu.bit.fishpond.service.entity.*;
 import edu.bit.fishpond.service.UserService;
 import edu.bit.fishpond.utils.DAOException;
@@ -14,7 +17,11 @@ import org.springframework.stereotype.Component;
 
 import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;
-import java.nio.ByteBuffer;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+
+import static javax.websocket.CloseReason.CloseCodes.GOING_AWAY;
 
 @ServerEndpoint("/websocket")
 @Component
@@ -25,25 +32,30 @@ public class WebSocketConnect {
     private int id = 0;
 
     private static UserService userService;
+    private static ConnectService connectService;
 
     @Autowired
-    public void setUserService(UserService  userService){
+    public void setUserService(UserService  userService, ConnectService connectService){
         WebSocketConnect.userService = userService;
+        WebSocketConnect.connectService = connectService;
     }
 
     @OnOpen
     public void onOpen(Session newSession){
         session = newSession;
-        logger.info("建立新的会话");
-        //sendMessageToOne("hello");
+        logger.info(String.format("与%s建立新的会话", session.getId()));
     }
 
     @OnClose
-    public void onClose(){
-        if (id != 0){
+    public void onClose(CloseReason closeReason){
+        if (id != 0) {
             WebSocketServer.DisConnect(id);
+            logger.info(String.format("与%d的会话已关闭",id));
         }
-        logger.info(String.format("与%d的会话已关闭",id));
+        else {
+            logger.info(String.format("与%s的会话已关闭",session.getId()));
+        }
+        logger.info("关闭原因：" + closeReason.getCloseCode() + ",关闭原因描述：" + closeReason.getReasonPhrase());
     }
 
     @OnMessage
@@ -62,56 +74,102 @@ public class WebSocketConnect {
         String body = messageSplitArray[1];
         String sendMessageBody;
         String sendMessageHead;
+        ServiceResult result;
+        List<ServerMessage> serverMessageList;
         //根据消息头解析消息体
         try {
             switch (head){
-                case "Register":
-                    RegisterClientEntity registerClientEntity = JSONObject.parseObject(body, RegisterClientEntity.class);
-                    sendMessageBody = userService.register(registerClientEntity);
-                    sendMessageHead = "NewUserId";
-                    sendMessageDirect(sendMessageHead, sendMessageBody);
-                    break;
                 case "Login":
                     LoginClientEntity loginClientEntity = JSONObject.parseObject(body, LoginClientEntity.class);
 
-                    boolean queryResult = userService.login(loginClientEntity);
+                    boolean queryResult = connectService.login(loginClientEntity);
                     LoginServerEntity loginServerEntity = new LoginServerEntity();
                     loginServerEntity.setLoginResult(queryResult);
                     sendMessageBody = JSON.toJSONString(loginServerEntity);
                     sendMessageHead = "LoginResult";
                     if (queryResult){
                         id = loginClientEntity.getLoginUserId();
+                        logger.info(String.format("Id：%d成功登录",id));
                         WebSocketServer.NewConnect(session, id);
                     }
 
                     sendMessageDirect(sendMessageHead, sendMessageBody);
                     break;
-                case "FriendRequest":
-                    FriendRequestGetEntity friendRequestGetEntity =
-                            JSONObject.parseObject(body, FriendRequestGetEntity.class);
-                    sendMessageBody = userService.friendRequestHandler(friendRequestGetEntity);
-                    if (!sendMessageBody.isEmpty()){
-                        sendMessageDirect("FriendRequestFromOther", sendMessageBody);
-                    }
+                case "Register":
+                    RegisterClientEntity registerClientEntity = JSONObject.parseObject(body, RegisterClientEntity.class);
+                    serverMessageList = userService.registerHandler(registerClientEntity);
+                    sendServerMessage(serverMessageList);
                     break;
-                case "FRF":
-                    FRFGetEntity frfGetEntity = JSONObject.parseObject(body, FRFGetEntity.class);
 
+                case "SendFriendRequestTo":
+                    FriendRequestClientEntity friendRequestClientEntity =
+                            JSONObject.parseObject(body, FriendRequestClientEntity.class);
+                    serverMessageList = userService.sendFriendRequestHandler(friendRequestClientEntity);
+                    sendServerMessage(serverMessageList);
+                    break;
+                case "FriendRequestFeedback":
+                    FriendRequestFeedbackClientEntity friendRequestFeedbackClientEntity =
+                            JSONObject.parseObject(body, FriendRequestFeedbackClientEntity.class);
+                    serverMessageList = userService.getFriendRequestFeedbackHandler(friendRequestFeedbackClientEntity);
+                    sendServerMessage(serverMessageList);
                     break;
                 case "GetFriendList":
                     UserIdEntity userIdEntity = JSONObject.parseObject(body, UserIdEntity.class);
-                    sendMessageBody = userService.FriendListService(userIdEntity);
+                    sendMessageBody = userService.getFriendList(userIdEntity);
                     sendMessageHead = "FriendList";
                     sendMessageDirect(sendMessageHead, sendMessageBody);
                     break;
-                case "OffLine":
+                case "GetLatestMessage":
+                    UserIdEntity getLatestMessageUserIdEntity = JSONObject.parseObject(body,UserIdEntity.class);
+                    sendMessageBody = userService.getLatestMessage(getLatestMessageUserIdEntity);
+                    sendMessageHead = "LatestMessage";
+                    sendMessageDirect(sendMessageHead, sendMessageBody);
+                    break;
+                case "GetUnreadMessage":
+                    UserIdEntity getUnreadMessageUserIdEntity = JSONObject.parseObject(body, UserIdEntity.class);
+                    serverMessageList = userService.getUnreadMessage(getUnreadMessageUserIdEntity);
+                    sendServerMessage(serverMessageList);
+                    break;
+                case "GetUnreadFriendRequest":
+                    UserIdEntity getUnreadFriendRequest = JSONObject.parseObject(body, UserIdEntity.class);
+                    serverMessageList = userService.getUnreadFriendRequestHandler(getUnreadFriendRequest);
+                    sendServerMessage(serverMessageList);
+                    break;
+                case "GetMessageBetween":
+                    PersonMessageClientEntity personMessageClientEntity =
+                            JSONObject.parseObject(body,PersonMessageClientEntity.class);
+                    result = userService.getAllMessageBetween(personMessageClientEntity);
+                    resultHandler(result);
+                    break;
+                case "GetGroupList":
+                    break;
+                case "GetAllMessage":
+                    UserIdEntity getMessageUserIdEntity = JSONObject.parseObject(body,UserIdEntity.class);
+                    sendMessageBody = userService.getAllMessage(getMessageUserIdEntity);
+                    sendMessageHead = "AllMessage";
+                    sendMessageDirect(sendMessageHead, sendMessageBody);
+                    break;
+                case "SendMessageTo":
+                    MessageEntity sendMessageEntity = JSONObject.parseObject(body, MessageEntity.class);
+                    serverMessageList = userService.sendMessageHandler(sendMessageEntity);
+                    sendServerMessage(serverMessageList);
                     break;
                 case "SearchUser":
                     SearchUserClientEntity searchUserClientEntity =
                             JSONObject.parseObject(body, SearchUserClientEntity.class);
-                    sendMessageBody = userService.searchUser(searchUserClientEntity);
-                    sendMessageHead = "SearchUserResult";
-                    sendMessageDirect(sendMessageHead,sendMessageBody);
+                    serverMessageList = userService.searchUserHandler(searchUserClientEntity);
+                    sendServerMessage(serverMessageList);
+                    break;
+                case "GetUserInfo":
+                    UserIdEntity getUserInfoUserIdEntity = JSON.parseObject(body, UserIdEntity.class);
+                    serverMessageList = userService.getUserInfo(getUserInfoUserIdEntity);
+                    sendServerMessage(serverMessageList);
+                    break;
+                case "OffLine":
+                    UserIdEntity offLineUserIdEntity = JSONObject.parseObject(body, UserIdEntity.class);
+                    connectService.offLine(offLineUserIdEntity);
+                    onClose(new CloseReason(GOING_AWAY,"账号在别的位置登录"));
+                    break;
                 default:
                     throw new MessageHeadException(String.format("无法解析:%s,未知的消息头%s",message,head));
             }
@@ -122,27 +180,78 @@ public class WebSocketConnect {
         catch (JSONException jsonException) {
             logger.warn(String.format("无法解析:%s,未知的消息体%s",message,body));
         }
+        catch (IOException ioException){
+            logger.error("ioException");
+        }
         catch (DAOException daoException) {
-            return;
+            ErrorEntity errorEntity = new ErrorEntity();
+            errorEntity.setErrorInfo("数据库错误");
+            sendMessageBody = JSON.toJSONString(errorEntity);
+            sendMessageHead = "Error";
+            sendMessageDirect(sendMessageHead, sendMessageBody);
         }
     }
 
     @OnError
     public void onError(Session session, Throwable error){
         if (id != 0){
-            WebSocketServer.DisConnect(id);
+            logger.error(String.format("与%d的会话发生错误",id));
         }
-        logger.error(String.format("与%d的会话发生错误",id));
+        else {
+            logger.error(String.format("与%s的会话发生错误",session.getId()));
+        }
+        error.printStackTrace();
     }
 
     public void sendMessageDirect(String head, String body) {
         String message = head + "|" + body;
-        logger.info(String.format("向客户端:%d发送了消息:%s",id, message));
-        session.getAsyncRemote().sendText(message);
+        session.getAsyncRemote().sendText(message, sendResult -> {
+            if (!sendResult.isOK()){
+                logger.error(sendResult.getException().getMessage());
+            }
+            else {
+                logger.info(String.format("向客户端:%d发送了消息:%s",id, message));
+            }
+        });
+
+    }
+    
+    public void sendMessageDirect(String message) {
+        session.getAsyncRemote().sendText(message, sendResult -> {
+            if (!sendResult.isOK()){
+                logger.error(sendResult.getException().getMessage());
+            }
+            else {
+                logger.info(String.format("向客户端:%d发送了消息:%s",id, message));
+            }
+        });
+
     }
 
-    public void sendFileToOne(ByteBuffer byteBuffer) {
-        session.getAsyncRemote().sendBinary(byteBuffer);
+    private void resultHandler(ServiceResult result){
+        if (result.isSendMessage()){
+            for (Map.Entry<Integer, String> entry: result.getSenderMessageMap().entrySet()) {
+                if (entry.getKey() == 0){
+                    sendMessageDirect(entry.getValue());
+                }
+                else {
+                    WebSocketServer.SendMessageTo(entry.getKey(), entry.getValue());
+                }
+            }
+        }
     }
+
+    private void sendServerMessage(List<ServerMessage> serverMessageList){
+        for (ServerMessage serverMessage: serverMessageList) {
+            int targetId = serverMessage.getTargetId();
+            if (targetId == 0){
+                sendMessageDirect(serverMessage.getMessage());
+            }
+            else {
+                WebSocketServer.SendMessageTo(targetId, serverMessage.getMessage());
+            }
+        }
+    }
+
 
 }

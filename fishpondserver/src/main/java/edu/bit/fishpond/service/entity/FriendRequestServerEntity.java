@@ -5,10 +5,10 @@ import com.alibaba.fastjson.annotation.JSONField;
 /**
  * 向客户端发送好友请求的通信实体类
  */
-public class FriendRequestSendEntity {
+public class FriendRequestServerEntity {
 
     @JSONField(ordinal = 1)
-    private int senderId;
+    private int applierId;
 
     @JSONField(ordinal = 2)
     private String sendTime;
@@ -16,12 +16,15 @@ public class FriendRequestSendEntity {
     @JSONField(ordinal = 3)
     private String explain;
 
-    public int getSenderId() {
-        return senderId;
+    @JSONField(ordinal = 4)
+    private String applierName;
+
+    public int getApplierId() {
+        return applierId;
     }
 
-    public void setSenderId(int senderId) {
-        this.senderId = senderId;
+    public void setApplierId(int applierId) {
+        this.applierId = applierId;
     }
 
     public String getSendTime() {
@@ -38,5 +41,13 @@ public class FriendRequestSendEntity {
 
     public void setExplain(String explain) {
         this.explain = explain;
+    }
+
+    public String getApplierName() {
+        return applierName;
+    }
+
+    public void setApplierName(String applierName) {
+        this.applierName = applierName;
     }
 }

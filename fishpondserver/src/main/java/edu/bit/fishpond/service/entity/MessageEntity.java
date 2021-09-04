@@ -8,7 +8,13 @@ public class MessageEntity {
     private int senderId;
 
     @JSONField
+    private String senderName;
+
+    @JSONField
     private int recipientId;
+
+    @JSONField
+    private String recipientName;
 
     @JSONField
     private String messageType;
@@ -57,5 +63,21 @@ public class MessageEntity {
 
     public void setRecipientId(int recipientId) {
         this.recipientId = recipientId;
+    }
+
+    public String getSenderName() {
+        return senderName;
+    }
+
+    public void setSenderName(String senderName) {
+        this.senderName = senderName;
+    }
+
+    public String getRecipientName() {
+        return recipientName;
+    }
+
+    public void setRecipientName(String recipientName) {
+        this.recipientName = recipientName;
     }
 }
