@@ -20,4 +20,6 @@ public class QueryService {
     public List<UserInfoDO> getAllUsers() {
         return userInfoMapper.selectAll();
     }
+
+    public List<UserInfoDO> getUsers(int num) {return userInfoMapper.selectBatch(num);}
 }

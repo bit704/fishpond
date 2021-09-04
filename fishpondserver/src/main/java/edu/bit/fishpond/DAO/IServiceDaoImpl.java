@@ -123,7 +123,7 @@ public class IServiceDaoImpl implements IServiceDao {
                 null,
                 false,
                 now.toString(),
-                null,
+                "null",
                 true);
         if (insertNum2 != 1) {
             throw new DAOException("注册新用户失败");
@@ -175,7 +175,9 @@ public class IServiceDaoImpl implements IServiceDao {
     public List<String> getUnreadMessage(int recipientId) {
         UserInfoDO userInfoDO = userInfoMapper.selectOneById(recipientId);
         //获取用户上次离线时间
-        LocalDateTime last_offline = LocalDateTime.parse(userInfoDO.getLast_offline());
+        String time = userInfoDO.getLast_offline();
+        if(time == null) return new ArrayList<>();
+        LocalDateTime last_offline = LocalDateTime.parse(time);
         List<MessageDO> messageDOList = messageMapper.selectByReceiverBeforeTime(recipientId, last_offline.toString());
         return messages2Strings(messageDOList);
     }
