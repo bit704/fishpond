@@ -39,6 +39,11 @@ public interface MessageMapper {
 
     @Select("select * from "
             + tableName
+            + " where ((receiver = #{receiver} and sender = #{sender}) or (receiver = #{sender} and sender = #{receiver}))")
+    public List<MessageDO> selectByPartner(@Param("sender") int sender,@Param("receiver") int receiver);
+
+    @Select("select * from "
+            + tableName
             + " where receiver = #{receiver} and send_time >= #{send_time}")
     public List<MessageDO> selectByReceiverBeforeTime(@Param("receiver") int receiver,
                                                      @Param("send_time") String send_time);

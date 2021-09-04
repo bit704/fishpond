@@ -1,8 +1,8 @@
 /*
 gsql -d fishpond -p 26000
 
-gsql -d fishpond -U mhn -p 26000 -r
-fpDbMhn#
+gsql -d fishpond -U mhn -p 26000  -W fpDbMhn# -r
+
 */
 
 create table fishpond.user(
@@ -39,8 +39,8 @@ real BOOLEAN Not Null
 select setval('fishpond.groupinfo_uid_seq',10000000,true);
 
 create table fishpond.friendship(
-uid1 INTEGER,
-uid2 INTEGER,
+uid1 INTEGER references fishpond.user(uid),
+uid2 INTEGER references fishpond.user(uid),
 friend_time DATE NOT NULL,
 primary key (uid1,uid2)
 );
