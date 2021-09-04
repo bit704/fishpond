@@ -1,10 +1,9 @@
 package edu.bit.fishpond.service;
 
-import org.springframework.stereotype.Component;
+import edu.bit.fishpond.utils.DAOException;
 
 import java.util.List;
 
-@Component
 public interface IServiceDao {
 
     /**
@@ -15,7 +14,7 @@ public interface IServiceDao {
      * @param answer 新用户密保问题的答案
      * @return 新用户的ID
      */
-    int recordNewUser(String userName, String password, String securityQuestion, String answer);
+    int recordNewUser(String userName, String password, String securityQuestion, String answer) throws DAOException;
 
     /**
      * 创建新的群聊
@@ -31,13 +30,13 @@ public interface IServiceDao {
      * @param userId 要查询的用户的Id
      * @return 在线状态
      */
-    boolean queryOnlineStatusById(int userId);
+    boolean queryOnlineStatusById(int userId) throws DAOException;
 
     /**
      * 更新用户的在线状态（直接取反即可）
      * @param userId 用户id
      */
-    void updateOnlineStatusById(int userId);
+    void updateOnlineStatusById(int userId) throws DAOException;
 
     /**
      * 好友申请，添加新的好友申请
@@ -46,7 +45,7 @@ public interface IServiceDao {
      * @param explain 附加信息
      * @param sendTime 申请发送时间
      */
-    void recordFriendRequest(int applierId, int recipientId, String explain, String sendTime);
+    void recordFriendRequest(int applierId, int recipientId, String explain, String sendTime) throws DAOException;
 
     /**
      * 检查用户id和密码是否匹配
@@ -57,14 +56,15 @@ public interface IServiceDao {
     boolean checkPassword(int userId, String passwordHash);
 
     /**
-     * 获取发送给指定用户的未读消息(根据上次离线时间和消息发送时间判断)
+     * 输出格式调整！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
+     * 获取发送给指定用户的未读消息(根据上次离线时间和消息发送时间判断),应按时间顺序从老到新排列
      * @param recipientId 消息接收者id
-     * @return 未读消息列表（格式：发送者ID#消息类型#发送时间#消息内容）,无则返回empty，绝对不要返回null
+     * @return 未读消息列表（格式：发送者ID#接收者ID#消息类型#发送时间#消息内容）,无则返回empty，绝对不要返回null
      */
     List<String> getUnreadMessage(int recipientId);
 
     /**
-     * 获取所有与该用户有关的消息，按时间顺序排列
+     * 获取所有与该用户有关的消息，按时间顺序从老到新排列
      * @param userId 用户id
      * @return 消息列表（格式：发送者ID#接收者ID#消息类型#发送时间#消息内容）
      */
@@ -91,7 +91,7 @@ public interface IServiceDao {
      * @param userId2 用户2
      * @param beFriendTime 成为好友的时间
      */
-    void recordFriendship(int userId1, int userId2, String beFriendTime);
+    void recordFriendship(int userId1, int userId2, String beFriendTime) throws DAOException;
 
     /**
      * 新的系统消息
@@ -100,25 +100,27 @@ public interface IServiceDao {
      * @param messageType 消息类型
      * @param content 消息内容
      */
-    void recordSystemMessage(int userId, String sendTime, String messageType, String content);
+    void recordSystemMessage(int userId, String sendTime, String messageType, String content) throws DAOException;
 
     /**
      * 删除指定申请者和接收者的好友申请
      * @param applierId 申请者id
      * @param recipientId 接收者id
      */
-    void deleteFriendRequest(int applierId, int recipientId);
+    void deleteFriendRequest(int applierId, int recipientId) throws DAOException;
 
     /**
-     * 通过ID获取该用户的好友列表及好友信息
-     * @return 返回该用户的所有好友（格式：好友ID#好友用户名）
+     * 输出格式调整！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
+     * 通过ID获取该用户的好友列表
+     * @return 返回该用户的所有好友Id
      */
-    List<String> queryFriendshipById(int senderId);
+    List<Integer> queryFriendshipById(int senderId);
 
     /**
+     * 新增格式说明！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
      * 通过ID获取其信息
      * @param id 要查询的用户的ID
-     * @return 返回该用户的用户信息，如果ID不存在，则返回""
+     * @return 返回该用户的用户信息（格式：ID#用户名#性别#生日#地区#注册时间），如果ID不存在，则返回""
      */
     String queryUserInfoById(int id);
 
@@ -137,12 +139,12 @@ public interface IServiceDao {
      * @param sendTime 发送时间
      * @param messageContent 消息内容
      */
-    void recordMessage(int senderId, int recipientId, String messageType, String sendTime, String messageContent);
+    void recordMessage(int senderId, int recipientId, String messageType, String sendTime, String messageContent) throws DAOException;
 
     /**
      * 获取最新的消息
      * @param userId 用户id
-     * @return 与该用户有关的所有消息的离线前的最后一条消息（格式：发送者ID#接收者ID#消息类型#发送时间#消息内容）
+     * @return 与该用户有关的所有消息的最后一条消息（格式：发送者ID#接收者ID#消息类型#发送时间#消息内容）
      */
     List<String> queryLatestMessage(int userId);
 
@@ -161,5 +163,11 @@ public interface IServiceDao {
      * @return 群列表id，格式：群聊id#群聊名称
      */
     List<String> queryGroupByUserId(int userId);
+
+    /**
+     * 删除指定id对应的用户
+     * @param userId 用户id
+     */
+    void deleteUser(int userId);
 
 }

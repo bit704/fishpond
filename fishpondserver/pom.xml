@@ -48,6 +48,11 @@
             <scope>system</scope>
             <systemPath>${project.basedir}/lib/postgresql.jar</systemPath>
         </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

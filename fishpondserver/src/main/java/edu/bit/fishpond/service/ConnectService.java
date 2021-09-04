@@ -2,6 +2,7 @@ package edu.bit.fishpond.service;
 
 import edu.bit.fishpond.service.entity.LoginClientEntity;
 import edu.bit.fishpond.service.entity.UserIdEntity;
+import edu.bit.fishpond.utils.DAOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +19,7 @@ public class ConnectService {
         this.serviceDao = serviceDao;
     }
 
-    public boolean login(LoginClientEntity loginClientEntity){
+    public boolean login(LoginClientEntity loginClientEntity) throws DAOException {
         int loginId = loginClientEntity.getLoginUserId();
         String passwordHash = loginClientEntity.getPasswordHash();
         boolean queryResult = serviceDao.checkPassword(loginId, passwordHash);
@@ -36,7 +37,7 @@ public class ConnectService {
         return queryResult;
     }
 
-    public void offLine(UserIdEntity userIdEntity){
+    public void offLine(UserIdEntity userIdEntity) throws DAOException {
         int offLineId = userIdEntity.getUserId();
         serviceDao.updateOnlineStatusById(offLineId);
     }

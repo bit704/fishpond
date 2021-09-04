@@ -2,10 +2,10 @@ package edu.bit.fishpond.service;
 
 import com.alibaba.fastjson.JSON;
 import edu.bit.fishpond.service.entity.*;
+import edu.bit.fishpond.utils.DAOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -18,35 +18,14 @@ import java.util.Map;
 public class UserService {
 
     @Autowired
-    public UserService(@Qualifier("serviceDao") IServiceDao userDao){
-        this.userDao = userDao;
+    public UserService(IServiceDao serviceDao){
+        this.serviceDao = serviceDao;
     }
 
-    private final IServiceDao userDao;
+    private final IServiceDao serviceDao;
     private final Logger logger = LoggerFactory.getLogger(UserService.class);
 
-    public ServiceResult register(RegisterClientEntity registerClientEntity){
-        String userName = registerClientEntity.getUserName();
-        String password = registerClientEntity.getPassword();
-        String securityQuestion = registerClientEntity.getSecurityQuestion();
-        String answer = registerClientEntity.getAnswer();
-
-        // 获取新用户的id
-        int id = userDao.recordNewUser(userName, password, securityQuestion, answer);
-        UserIdEntity userIdEntity = new UserIdEntity();
-        userIdEntity.setUserId(id);
-        String sendMessageBody = JSON.toJSONString(userIdEntity);
-
-        //返回结果
-        ServiceResult result = new ServiceResult();
-        Map<Integer, String> senderMessageMap = new HashMap<>();
-        senderMessageMap.put(0, "RegisterResult" + "|" + sendMessageBody);
-        result.setSendMessage(true);
-        result.setSenderMessageMap(senderMessageMap);
-        return result;
-    }
-
-    public List<ServerMessage> register2(RegisterClientEntity registerClientEntity){
+    public List<ServerMessage> registerHandler(RegisterClientEntity registerClientEntity) throws DAOException {
         List<ServerMessage> serverMessageList = new ArrayList<>();
 
         String userName = registerClientEntity.getUserName();
@@ -55,7 +34,7 @@ public class UserService {
         String answer = registerClientEntity.getAnswer();
 
         // 获取新用户的id
-        int id = userDao.recordNewUser(userName, password, securityQuestion, answer);
+        int id = serviceDao.recordNewUser(userName, password, securityQuestion, answer);
         UserIdEntity userIdEntity = new UserIdEntity();
         userIdEntity.setUserId(id);
         String sendMessageBody = JSON.toJSONString(userIdEntity);
@@ -65,23 +44,18 @@ public class UserService {
         return serverMessageList;
     }
 
-    public String friendRequestHandler(FriendRequestClientEntity friendRequestClientEntity){
-        int applierId = friendRequestClientEntity.getApplierId();
-        int recipientId = friendRequestClientEntity.getRecipientId();
-        String explain = friendRequestClientEntity.getExplain();
+    public List<ServerMessage> sendFriendRequestHandler(FriendRequestClientEntity entity) throws DAOException {
+        List<ServerMessage> serverMessageList = new ArrayList<>();
+
+        int applierId = entity.getApplierId();
+        int recipientId = entity.getRecipientId();
+        String explain = entity.getExplain();
         LocalDateTime currentTime = LocalDateTime.now();
-        boolean onlineStatus = userDao.queryOnlineStatusById(recipientId);
+        boolean onlineStatus = serviceDao.queryOnlineStatusById(recipientId);
         String sendMessageBody = "";
 
         //添加新的好友申请
-        userDao.recordFriendRequest(applierId, recipientId,explain, currentTime.toString());
-
-        //异常处理
-        //logger.error(String.format("数据层错误，无法添加该好友申请: applierId:%d,recipientId:%d,explain:%s,sendTime:%s",
-        //applierId,recipientId,explain,sendTime));
-        //ErrorEntity errorEntity = new ErrorEntity();
-        //errorEntity.setErrorInfo("服务器错误，无法添加好友");
-        //sendMessageBody = JSON.toJSONString(errorEntity);
+        serviceDao.recordFriendRequest(applierId, recipientId,explain, currentTime.toString());
 
         //如果接收者在线
         if (onlineStatus){
@@ -91,15 +65,15 @@ public class UserService {
             friendRequestServerEntity.setSendTime(currentTime.toString());
             friendRequestServerEntity.setExplain(explain);
             sendMessageBody = JSON.toJSONString(friendRequestServerEntity);
-            return sendMessageBody;
+            serverMessageList.add(new ServerMessage(recipientId, "NewFriendRequest", sendMessageBody));
         }
 
-        return sendMessageBody;
+        return serverMessageList;
     }
 
     public String getAllMessage(UserIdEntity userIdEntity){
         int id = userIdEntity.getUserId();
-        List<String> queryResult = userDao.queryAllMessage(id);
+        List<String> queryResult = serviceDao.queryAllMessage(id);
         List<MessageEntity> messageList = new ArrayList<>();
 
         if (!queryResult.isEmpty()){
@@ -110,7 +84,7 @@ public class UserService {
                     int senderId = Integer.parseInt(queryDataArray[0]);
                     String senderName = "";
                     messageEntity.setSenderId(senderId);
-                    String queryResult2 = userDao.queryUserInfoById(senderId);
+                    String queryResult2 = serviceDao.queryUserInfoById(senderId);
                     String[] querySplitArray2 = queryResult2.split("#");
                     if (querySplitArray2.length == 6){
                         senderName = querySplitArray2[1];
@@ -119,7 +93,7 @@ public class UserService {
                     int recipientId = Integer.parseInt(queryDataArray[1]);
                     String recipientName = "";
                     messageEntity.setRecipientId(recipientId);
-                    String queryResult3 = userDao.queryUserInfoById(recipientId);
+                    String queryResult3 = serviceDao.queryUserInfoById(recipientId);
                     String[] querySplitArray3 = queryResult3.split("#");
                     if (querySplitArray3.length == 6){
                         recipientName = querySplitArray3[1];
@@ -133,7 +107,8 @@ public class UserService {
                     messageList.add(messageEntity);
                 }
                 else {
-                    logger.error(String.format("无法解析:%s",queryLine));
+                    logger.error(String.format("无法解析数据层数据:%s,解析后实际length为:%d，设定为5",
+                            queryLine,queryDataArray.length));
                 }
             }
         }
@@ -143,16 +118,17 @@ public class UserService {
 
     public String getLatestMessage(UserIdEntity userIdEntity){
         int id = userIdEntity.getUserId();
-        List<String> queryResult = userDao.queryLatestMessage(id);
+        List<String> queryResult = serviceDao.queryLatestMessage(id);
         List<MessageEntity> messageList = getMessageEntityList(queryResult);
 
         return JSON.toJSONString(messageList);
     }
 
-    public List<ServerMessage> getFriendRequest(int loginId){
+    public List<ServerMessage> getUnreadFriendRequestHandler(UserIdEntity userIdEntity){
         List<ServerMessage> serverMessageList = new ArrayList<>();
 
-        List<String> queryResult = userDao.queryFriendRequest(loginId);
+        int loginId = userIdEntity.getUserId();
+        List<String> queryResult = serviceDao.queryFriendRequest(loginId);
         List<FriendRequestServerEntity> friendRequestList = new ArrayList<>();
         if (!queryResult.isEmpty()){
             for (String queryLine: queryResult) {
@@ -160,25 +136,31 @@ public class UserService {
                 String[] queryDataArray = queryLine.split("#");
                 if (queryDataArray.length == 3){
                     FriendRequestServerEntity friendRequestServerEntity = new FriendRequestServerEntity();
-                    friendRequestServerEntity.setApplierId(Integer.parseInt(queryDataArray[0]));
+                    //获取申请人Id
+                    int applierId = Integer.parseInt(queryDataArray[0]);
+                    friendRequestServerEntity.setApplierId(applierId);
                     friendRequestServerEntity.setSendTime(queryDataArray[1]);
                     friendRequestServerEntity.setExplain(queryDataArray[2]);
+                    //获取申请人的用户名
+                    UserInfoServerEntity userInfoServerEntity = getUserInfoById(applierId);
+                    friendRequestServerEntity.setApplierName(userInfoServerEntity.getUsername());
                     friendRequestList.add(friendRequestServerEntity);
                 }
                 else {
-                    logger.error(String.format("无法解析:%s",queryLine));
+                    logger.error(String.format("无法解析数据层数据:%s,解析后实际length为:%d，设定为3",
+                            queryLine,queryDataArray.length));
                 }
 
             }
         }
 
         String sendMessageBody = JSON.toJSONString(friendRequestList);
-        serverMessageList.add(new ServerMessage(0, "FriendRequest", sendMessageBody));
+        serverMessageList.add(new ServerMessage(0, "UnreadFriendRequest", sendMessageBody));
 
         return serverMessageList;
     }
 
-    public List<ServerMessage> FriendRequestFeedbackHandler(FriendRequestFeedbackClientEntity entity){
+    public List<ServerMessage> getFriendRequestFeedbackHandler(FriendRequestFeedbackClientEntity entity) throws DAOException {
         List<ServerMessage> serverMessageList = new ArrayList<>();
 
         int senderId = entity.getSenderId();
@@ -186,34 +168,37 @@ public class UserService {
         boolean requestResult = entity.getResult();
 
         LocalDateTime currentTime = LocalDateTime.now();
-        boolean applierOnlineStatus = userDao.queryOnlineStatusById(senderId);
-        boolean recipientOnlineStatus = userDao.queryOnlineStatusById(recipientId);
+        boolean applierOnlineStatus = serviceDao.queryOnlineStatusById(senderId);
+        boolean recipientOnlineStatus = serviceDao.queryOnlineStatusById(recipientId);
         String sendMessageBody;
+
+        //收到反馈后即可删除好友申请
+        serviceDao.deleteFriendRequest(senderId, recipientId);
         //如果接受申请,则成为好友
         if (requestResult){
-            userDao.recordFriendship(senderId, recipientId, currentTime.toString());
+            serviceDao.recordFriendship(senderId, recipientId, currentTime.toString());
 
             //如果申请人在线
             if (applierOnlineStatus){
-                //获取新的好友列表
-                UserIdEntity userIdEntity = new UserIdEntity();
-                userIdEntity.setUserId(senderId);
-                sendMessageBody = FriendListService(userIdEntity);
-                serverMessageList.add(new ServerMessage(senderId, "FriendList", sendMessageBody));
+                //获取新的好友，即接收人的信息
+                UserInfoServerEntity userInfo = getUserInfoById(recipientId);
+                sendMessageBody = JSON.toJSONString(userInfo);
+                serverMessageList.add(new ServerMessage(senderId, "NewFriend", sendMessageBody));
+
             }
-            if (recipientOnlineStatus){
-                UserIdEntity userIdEntity = new UserIdEntity();
-                userIdEntity.setUserId(recipientId);
-                sendMessageBody = FriendListService(userIdEntity);
-                serverMessageList.add(new ServerMessage(recipientId, "FriendList", sendMessageBody));
+            //如果接收人在线
+            if (true){
+                //获取新的好友，即申请人的信息
+                UserInfoServerEntity userInfo = getUserInfoById(senderId);
+                sendMessageBody = JSON.toJSONString(userInfo);
+                serverMessageList.add(new ServerMessage(0, "NewFriend", sendMessageBody));
             }
 
 
         }
-        //如果拒绝申请，向申请者发送系统信息
         else {
             if (!applierOnlineStatus){
-                userDao.recordSystemMessage(senderId, currentTime.toString(), "", "你的好友申请已被拒绝");
+                serviceDao.recordSystemMessage(senderId, currentTime.toString(), "", "你的好友申请已被拒绝");
             }
             else {
                 SystemMessageEntity systemMessageEntity = new SystemMessageEntity();
@@ -229,51 +214,46 @@ public class UserService {
         return serverMessageList;
     }
 
-    public String FriendListService(UserIdEntity userIdEntity){
+    public String getFriendList(UserIdEntity userIdEntity){
         int id = userIdEntity.getUserId();
-        List<String> queryResult = userDao.queryFriendshipById(id);
-        List<FriendServerEntity> friendList = new ArrayList<>();
+        List<Integer> queryResult = serviceDao.queryFriendshipById(id);
+        List<UserInfoServerEntity> friendList = new ArrayList<>();
 
-        if (!queryResult.isEmpty()){
-            for (String queryLine : queryResult){
-                String[] queryDataArray = queryLine.split("#");
-                if (queryDataArray.length == 2){
-                    FriendServerEntity friendServerEntity = new FriendServerEntity();
-                    friendServerEntity.setFriendId(Integer.parseInt(queryDataArray[0]));
-                    friendServerEntity.setFriendName(queryDataArray[1]);
-                    friendList.add(friendServerEntity);
-                }
-                else {
-                    logger.error(String.format("无法解析:%s",queryLine));
-                }
-            }
+        for (int friendId : queryResult){
+            UserInfoServerEntity friendInfoServerEntity = getUserInfoById(friendId);
+            friendList.add(friendInfoServerEntity);
         }
 
         return JSON.toJSONString(friendList);
     }
 
-    public String searchUser(SearchUserClientEntity searchUserClientEntity){
+    public List<ServerMessage> searchUserHandler(SearchUserClientEntity searchUserClientEntity){
+        List<ServerMessage> serverMessageList = new ArrayList<>();
+
         List<UserInfoServerEntity> resultList = new ArrayList<>();
 
         String searchInput = searchUserClientEntity.getSearchInput();
+        String sendMessageBody;
 
         //将搜索信息作为用户名的子串查询
-        List<String> queryResult = userDao.queryUserInfoByName(searchInput);
+        List<String> queryResult = serviceDao.queryUserInfoByName(searchInput);
 
         if (!queryResult.isEmpty()){
             for (String queryLine : queryResult){
                 String[] queryDataArray = queryLine.split("#");
-                if (queryDataArray.length == 5){
+                if (queryDataArray.length == 6){
                     UserInfoServerEntity userInfoServerEntity = new UserInfoServerEntity();
                     userInfoServerEntity.setUserId(Integer.parseInt(queryDataArray[0]));
                     userInfoServerEntity.setUsername(queryDataArray[1]);
                     userInfoServerEntity.setSex(queryDataArray[2]);
                     userInfoServerEntity.setBirthday(queryDataArray[3]);
                     userInfoServerEntity.setRegion(queryDataArray[4]);
+                    userInfoServerEntity.setAvatarUrl("");
                     resultList.add(userInfoServerEntity);
                 }
                 else {
-                    logger.error(String.format("无法解析:%s",queryLine));
+                    logger.error(String.format("无法解析数据层数据:%s,解析后实际length为:%d，设定为6",
+                            queryLine,queryDataArray.length));
                 }
             }
         }
@@ -281,128 +261,69 @@ public class UserService {
         int id;
         try {
             id = Integer.parseInt(searchInput);
+            String queryLine = serviceDao.queryUserInfoById(id);
+            if (!queryLine.isEmpty()){
+                String[] queryDataArray = queryLine.split("#");
+                if (queryDataArray.length == 6){
+                    UserInfoServerEntity userInfoServerEntity = new UserInfoServerEntity();
+                    userInfoServerEntity.setUserId(id);
+                    userInfoServerEntity.setUsername(queryDataArray[1]);
+                    userInfoServerEntity.setSex(queryDataArray[2]);
+                    userInfoServerEntity.setBirthday(queryDataArray[3]);
+                    userInfoServerEntity.setRegion(queryDataArray[4]);
+                    userInfoServerEntity.setRegisterTime(queryDataArray[5]);
+                    resultList.add(userInfoServerEntity);
+                }
+                else {
+                    logger.error(String.format("无法解析数据层数据:%s,解析后实际length为:%d，设定为6",
+                            queryLine,queryDataArray.length));
+                }
+            }
+
         }
-        catch (NumberFormatException exception){
-            return JSON.toJSONString(resultList);
+        catch (NumberFormatException ignored){
+
         }
-        String queryLine = userDao.queryUserInfoById(id);
-        String[] queryDataArray = queryLine.split("#");
-        if (queryDataArray.length == 6){
-            UserInfoServerEntity userInfoServerEntity = new UserInfoServerEntity();
-            userInfoServerEntity.setUserId(Integer.parseInt(queryDataArray[0]));
-            userInfoServerEntity.setUsername(queryDataArray[1]);
-            userInfoServerEntity.setSex(queryDataArray[2]);
-            userInfoServerEntity.setBirthday(queryDataArray[3]);
-            userInfoServerEntity.setRegion(queryDataArray[4]);
-            userInfoServerEntity.setRegisterTime(queryDataArray[5]);
-            resultList.add(userInfoServerEntity);
-        }
-        else {
-            logger.error(String.format("无法解析:%s",queryLine));
+        finally {
+            sendMessageBody = JSON.toJSONString(resultList);
         }
 
-        return JSON.toJSONString(resultList);
+        serverMessageList.add(new ServerMessage(0, "SearchUserResult", sendMessageBody));
+
+        return serverMessageList;
     }
 
-    public ServiceResult getMessage(MessageEntity messageEntity){
-        ServiceResult result = new ServiceResult();
-        Map<Integer, String> map = new HashMap<>();
+    public List<ServerMessage> sendMessageHandler(MessageEntity messageEntity) throws DAOException{
+        List<ServerMessage> serverMessageList = new ArrayList<>();
 
         int senderId = messageEntity.getSenderId();
         int recipientId = messageEntity.getRecipientId();
-        String sendTime = messageEntity.getSendTime();
+        String sendTime = LocalDateTime.now().toString();
         String messageType = messageEntity.getMessageType();
         String messageContent = messageEntity.getMessageContent();
 
         //将消息写入
-        userDao.recordMessage(senderId, recipientId, messageType, sendTime, messageContent);
-        boolean queryResult = userDao.queryOnlineStatusById(recipientId);
+        serviceDao.recordMessage(senderId, recipientId, messageType, sendTime, messageContent);
+        boolean queryResult = serviceDao.queryOnlineStatusById(recipientId);
         // 如果接收者在线
-        if (true) {
+        if (queryResult) {
             String sendMessageBody = JSON.toJSONString(messageEntity);
-            map.put(recipientId, "NewMessage|" + sendMessageBody);
-            result.setSendMessage(true);
-            result.setSenderMessageMap(map);
+            serverMessageList.add(new ServerMessage(recipientId, "NewMessage", sendMessageBody));
         }
 
-        return result;
+        return serverMessageList;
     }
 
-    public ServiceResult groupCreate(GroupCreateClientEntity entity){
-        ServiceResult result = new ServiceResult();
-        Map<Integer, String> map = new HashMap<>();
+    public List<ServerMessage> getUnreadMessage(UserIdEntity userIdEntity){
+        List<ServerMessage> serverMessageList = new ArrayList<>();
 
-        int creatorId = entity.getCreatorId();
-        String groupName = entity.getGroupName();
-        List<Integer> initialMembers = entity.getInitialMembers();
+        int id = userIdEntity.getUserId();
+        List<String> queryResult = serviceDao.getUnreadMessage(id);
+        List<MessageEntity> messageEntityList = getMessageEntityList(queryResult);
 
-        LocalDateTime currentTime = LocalDateTime.now();
-        String currentTimeString = currentTime.toString();
-
-        int groupId = userDao.recordNewGroup(groupName, creatorId, currentTimeString);
-        for (int memberId: initialMembers) {
-            userDao.recordNewMember(groupId, memberId, creatorId, currentTimeString);
-            boolean onlineStatus = userDao.queryOnlineStatusById(memberId);
-            if (onlineStatus){
-                List<GroupInfoServerEntity> resultList = new ArrayList<>();
-                List<String> queryResult = userDao.queryGroupByUserId(memberId);
-
-                if (!queryResult.isEmpty()){
-                    for (String queryLine : queryResult){
-                        String[] queryDataArray = queryLine.split("#");
-                        if (queryDataArray.length == 2){
-                            GroupInfoServerEntity groupInfoServerEntity = new GroupInfoServerEntity();
-                            groupInfoServerEntity.setGroupId(Integer.parseInt(queryDataArray[0]));
-                            groupInfoServerEntity.setGroupName(queryDataArray[1]);
-                            resultList.add(groupInfoServerEntity);
-                        }
-                        else {
-                            logger.error(String.format("无法解析:%s",queryLine));
-                        }
-                    }
-                }
-
-                String sendMessageBody = JSON.toJSONString(resultList);
-                map.put(memberId, "AllGroup|" + sendMessageBody);
-
-            }
-        }
-
-        result.setSendMessage(true);
-        result.setSenderMessageMap(map);
-        return result;
-    }
-
-    public ServiceResult getGroupInfo(UserIdEntity entity){
-        ServiceResult result = new ServiceResult();
-        Map<Integer, String> map = new HashMap<>();
-
-        List<GroupInfoServerEntity> resultList = new ArrayList<>();
-
-        int id = entity.getUserId();
-        List<String> queryResult = userDao.queryGroupByUserId(id);
-
-        if (!queryResult.isEmpty()){
-            for (String queryLine : queryResult){
-                String[] queryDataArray = queryLine.split("#");
-                if (queryDataArray.length == 2){
-                    GroupInfoServerEntity groupInfoServerEntity = new GroupInfoServerEntity();
-                    groupInfoServerEntity.setGroupId(Integer.parseInt(queryDataArray[0]));
-                    groupInfoServerEntity.setGroupName(queryDataArray[1]);
-                    resultList.add(groupInfoServerEntity);
-                }
-                else {
-                    logger.error(String.format("无法解析:%s",queryLine));
-                }
-            }
-        }
-
-        String sendMessageBody = JSON.toJSONString(resultList);
-        map.put(id, "AllGroup|" + sendMessageBody);
-        result.setSendMessage(true);
-        result.setSenderMessageMap(map);
-
-        return result;
+        String sendMessageBody = JSON.toJSONString(messageEntityList);
+        serverMessageList.add(new ServerMessage(0, "UnreadMessage", sendMessageBody));
+        return serverMessageList;
     }
 
     public ServiceResult getAllMessageBetween(PersonMessageClientEntity entity){
@@ -412,7 +333,7 @@ public class UserService {
         int id1 = entity.getUserId1();
         int id2 = entity.getUserId2();
 
-        List<String> queryResult = userDao.queryAllMessageBetween(id1, id2);
+        List<String> queryResult = serviceDao.queryAllMessageBetween(id1, id2);
 
         List<MessageEntity> messageList = getMessageEntityList(queryResult);
 
@@ -423,6 +344,32 @@ public class UserService {
 
         return result;
 
+    }
+
+    public List<ServerMessage> getAllMessageBetweenHandler(PersonMessageClientEntity entity) {
+        List<ServerMessage> serverMessageList = new ArrayList<>();
+
+        int id1 = entity.getUserId1();
+        int id2 = entity.getUserId2();
+
+        List<String> queryResult = serviceDao.queryAllMessageBetween(id1, id2);
+        List<MessageEntity> messageList = getMessageEntityList(queryResult);
+        String sendMessageBody = JSON.toJSONString(messageList);
+
+        serverMessageList.add(new ServerMessage(0, "MessageBetween", sendMessageBody));
+
+        return serverMessageList;
+    }
+
+    public List<ServerMessage> getUserInfo(UserIdEntity userIdEntity){
+        List<ServerMessage> serverMessageList = new ArrayList<>();
+
+        int id = userIdEntity.getUserId();
+        UserInfoServerEntity userInfoServerEntity = getUserInfoById(id);
+        String sendMessageBody = JSON.toJSONString(userInfoServerEntity);
+        serverMessageList.add(new ServerMessage(0, "UserInfo",sendMessageBody));
+
+        return serverMessageList;
     }
 
     private List<MessageEntity> getMessageEntityList(List<String> queryResult){
@@ -439,7 +386,7 @@ public class UserService {
                 //根据senderId得到senderName
                 String senderName = "";
                 messageEntity.setSenderId(senderId);
-                String queryResult2 = userDao.queryUserInfoById(senderId);
+                String queryResult2 = serviceDao.queryUserInfoById(senderId);
                 String[] querySplitArray2 = queryResult2.split("#");
                 if (querySplitArray2.length == 6){
                     senderName = querySplitArray2[1];
@@ -452,7 +399,7 @@ public class UserService {
                 //根据recipientId得到recipientName
                 String recipientName = "";
                 messageEntity.setRecipientId(recipientId);
-                String queryResult3 = userDao.queryUserInfoById(recipientId);
+                String queryResult3 = serviceDao.queryUserInfoById(recipientId);
                 String[] querySplitArray3 = queryResult3.split("#");
                 if (querySplitArray3.length == 6){
                     recipientName = querySplitArray3[1];
@@ -467,10 +414,36 @@ public class UserService {
                 messageList.add(messageEntity);
             }
             else {
-                logger.error(String.format("无法解析:%s",queryLine));
+                logger.error(String.format("无法解析数据层数据:%s,解析后实际length为:%d，设定为5",
+                        queryLine,queryDataArray.length));
             }
         }
 
         return messageList;
     }
+
+    private UserInfoServerEntity getUserInfoById(int id){
+        UserInfoServerEntity userInfoServerEntity = new UserInfoServerEntity();
+        String queryLine = serviceDao.queryUserInfoById(id);
+        logger.info(String.valueOf(id));
+        logger.info(queryLine);
+        if (!queryLine.isEmpty()){
+            String[] queryDataArray = queryLine.split("#",-1);
+            if (queryDataArray.length == 6){
+                userInfoServerEntity.setUserId(id);
+                userInfoServerEntity.setUsername(queryDataArray[1]);
+                userInfoServerEntity.setSex(queryDataArray[2]);
+                userInfoServerEntity.setBirthday(queryDataArray[3]);
+                userInfoServerEntity.setRegion(queryDataArray[4]);
+                userInfoServerEntity.setRegisterTime(queryDataArray[5]);
+                userInfoServerEntity.setAvatarUrl("");
+            }
+            else {
+                logger.error(String.format("无法解析数据层数据:%s,解析后实际length为:%d，设定为6",
+                        queryLine,queryDataArray.length));
+            }
+        }
+        return userInfoServerEntity;
+    }
+
 }

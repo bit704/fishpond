@@ -22,6 +22,9 @@ public class UserInfoServerEntity {
     @JSONField
     private String registerTime;
 
+    @JSONField
+    private String avatarUrl;
+
     public int getUserId() {
         return userId;
     }
@@ -68,5 +71,13 @@ public class UserInfoServerEntity {
 
     public void setRegisterTime(String registerTime) {
         this.registerTime = registerTime;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
     }
 }

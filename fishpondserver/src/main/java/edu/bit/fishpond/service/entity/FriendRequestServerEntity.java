@@ -16,6 +16,9 @@ public class FriendRequestServerEntity {
     @JSONField(ordinal = 3)
     private String explain;
 
+    @JSONField(ordinal = 4)
+    private String applierName;
+
     public int getApplierId() {
         return applierId;
     }
@@ -38,5 +41,13 @@ public class FriendRequestServerEntity {
 
     public void setExplain(String explain) {
         this.explain = explain;
+    }
+
+    public String getApplierName() {
+        return applierName;
+    }
+
+    public void setApplierName(String applierName) {
+        this.applierName = applierName;
     }
 }
