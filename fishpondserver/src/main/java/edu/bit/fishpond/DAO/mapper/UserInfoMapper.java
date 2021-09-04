@@ -70,6 +70,11 @@ public interface UserInfoMapper {
 
     @Delete("delete from "
             + tableName
+            + " where uid = #{uid}")
+    public int deleteOne(@Param("uid") int uid);
+
+    @Delete("delete from "
+            + tableName
             + " where ${columnName} = ${columnValue}")
     public int deleteBatch(@Param("columnName") String columnName,
                            @Param("columnValue") String columnValue);

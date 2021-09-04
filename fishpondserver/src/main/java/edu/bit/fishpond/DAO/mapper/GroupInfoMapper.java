@@ -24,6 +24,11 @@ public interface GroupInfoMapper {
     public GroupInfoDO selectBatch(@Param("columnName") String columnName,
                                    @Param("columnValue") String columnValue);
 
+    @Select("select name from "
+            + tableName
+            + " where gid = #{gid}")
+    public String selectNameById(@Param("gid") int gid);
+
     @Insert("insert into "
             + tableName
             + sql_insertColumns
@@ -63,6 +68,7 @@ public interface GroupInfoMapper {
 
     /**
      * 获取下一个序列号
+     *
      * @return 下一个序列号
      */
     @Select("select last_value from fishpond.groupinfo_uid_seq")

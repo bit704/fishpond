@@ -61,7 +61,6 @@ public interface IServiceDao {
     boolean checkPassword(int userId, String passwordHash);
 
     /**
-     * 输出格式调整！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
      * 获取发送给指定用户的未读消息(根据上次离线时间和消息发送时间判断),应按时间顺序从老到新排列
      * @param recipientId 消息接收者id
      * @return 未读消息列表（格式：发送者ID#接收者ID#消息类型#发送时间#消息内容）,无则返回empty，绝对不要返回null
@@ -115,14 +114,12 @@ public interface IServiceDao {
     void deleteFriendRequest(int applierId, int recipientId) throws DAOException;
 
     /**
-     * 输出格式调整！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
      * 通过ID获取该用户的好友列表
      * @return 返回该用户的所有好友Id
      */
     List<Integer> queryFriendshipById(int senderId);
 
     /**
-     * 新增格式说明！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
      * 通过ID获取其信息
      * @param id 要查询的用户的ID
      * @return 返回该用户的用户信息（格式：ID#用户名#性别#生日#地区#注册时间），如果ID不存在，则返回""
@@ -160,7 +157,7 @@ public interface IServiceDao {
      * @param invitorId 邀请人ID
      * @param inTime 加入时间
      */
-    void recordNewMember(int groupId, int userId, int invitorId, String inTime);
+    void recordNewMember(int groupId, int userId, int invitorId, String inTime) throws DAOException;
 
     /**
      * 查询id对应用户的所有群聊ID及群聊信息
