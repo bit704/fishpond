@@ -5,7 +5,6 @@ import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
 import edu.bit.fishpond.service.ConnectService;
 import edu.bit.fishpond.service.ServerMessage;
-import edu.bit.fishpond.service.ServiceResult;
 import edu.bit.fishpond.service.entity.*;
 import edu.bit.fishpond.service.UserService;
 import edu.bit.fishpond.utils.DAOException;
@@ -19,7 +18,6 @@ import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 import static javax.websocket.CloseReason.CloseCodes.GOING_AWAY;
 
@@ -74,7 +72,6 @@ public class WebSocketConnect {
         String body = messageSplitArray[1];
         String sendMessageBody;
         String sendMessageHead;
-        ServiceResult result;
         List<ServerMessage> serverMessageList;
         //根据消息头解析消息体
         try {
@@ -138,8 +135,8 @@ public class WebSocketConnect {
                 case "GetMessageBetween":
                     PersonMessageClientEntity personMessageClientEntity =
                             JSONObject.parseObject(body,PersonMessageClientEntity.class);
-                    result = userService.getAllMessageBetween(personMessageClientEntity);
-                    resultHandler(result);
+                    serverMessageList = userService.getAllMessageBetweenHandler(personMessageClientEntity);
+                    sendServerMessage(serverMessageList);
                     break;
                 case "GetGroupList":
                     break;
@@ -226,19 +223,6 @@ public class WebSocketConnect {
             }
         });
 
-    }
-
-    private void resultHandler(ServiceResult result){
-        if (result.isSendMessage()){
-            for (Map.Entry<Integer, String> entry: result.getSenderMessageMap().entrySet()) {
-                if (entry.getKey() == 0){
-                    sendMessageDirect(entry.getValue());
-                }
-                else {
-                    WebSocketServer.SendMessageTo(entry.getKey(), entry.getValue());
-                }
-            }
-        }
     }
 
     private void sendServerMessage(List<ServerMessage> serverMessageList){
