@@ -1,5 +1,6 @@
 package edu.bit.fishpondops;
 
+import edu.bit.fishpondops.service.ClientService;
 import edu.bit.fishpondops.service.MockService;
 import edu.bit.fishpondops.service.QueryService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,15 +42,24 @@ public class FishpondOpsShell {
         }
     }
 
+    @ShellMethod("查看数据库情况")
+    public String checkDb() {
+        return queryService.getDb();
+    }
+
     @ShellMethod("查看系统负载")
     public String checkLoad() {
-        return queryService.getLoad();
+        queryService.getLoad();
+        return "执行完毕";
     }
 
     @ShellMethod("执行压力测试")
-    public String pressureTest(int num) {
-        return  null;
+    public String pressureTest(@ShellOption(value = {"-N", "--num"}) int num) {
+        System.out.println("创建虚拟客户端数量："+num);
+        ClientService.initFakeClient(num);
+        ClientService.activeClient();
+        return  "执行完毕";
     }
-
+    //pressure-test --num 1
 
 }

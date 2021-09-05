@@ -10,3 +10,4 @@
 gen
 *.properties
 /HELP.md
+/spring-shell.log

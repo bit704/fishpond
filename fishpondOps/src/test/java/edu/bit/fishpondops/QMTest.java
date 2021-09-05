@@ -5,6 +5,7 @@ import edu.bit.fishpondops.service.QueryService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+
 public class QMTest extends FishpondOpsApplicationTests{
 
     @Autowired
@@ -13,7 +14,11 @@ public class QMTest extends FishpondOpsApplicationTests{
     @Autowired
     QueryService queryService;
 
+
+
+
     @Test
     public void test() {
+
     }
 }

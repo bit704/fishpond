@@ -6,11 +6,9 @@ import edu.bit.fishpondops.DAO.mapper.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
-import java.util.List;
 import java.util.StringJoiner;
 
 @Component
@@ -174,19 +172,49 @@ public class QueryService {
      *
      * @return
      */
-    public String getLoad() {
+    public void getLoad() {
+        java.io.BufferedReader r=new  java.io.BufferedReader(new java.io.InputStreamReader( System.in));
+        while (true) {
+            String line= null;
+            try {
+                line = r.readLine();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            if(line.equals("quit")) break;
+
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            LocalDateTime time = LocalDateTime.now();
+            //减去一分钟
+            time = time.minusMinutes(1);
+            //过去一分钟系统新增的消息数
+            int messageNum = messageMapper.selectCountBeforeTime(time.toString());
+            DateTimeFormatter dTF = DateTimeFormatter.ofPattern("yyyy年MM月dd日 HH时mm分ss秒");
+            System.out.println((String.format("%-25s", "统计时间：") + dTF.format(LocalDateTime.now())));
+            System.out.println((String.format("%-25s", "每秒钟流通消息数(按分)：") + String.format("%.2f", (double) messageNum / 60)));
+        }
+        return;
+
+    }
+
+    /**
+     * 获取数据库情况
+     *
+     * @return
+     */
+    public String getDb() {
         StringJoiner stringJoiner = new StringJoiner("\n");
         DateTimeFormatter dTF = DateTimeFormatter.ofPattern("yyyy年MM月dd日 HH时mm分ss秒");
         stringJoiner.add(String.format("%-25s", "统计时间：") + dTF.format(LocalDateTime.now()));
         stringJoiner.add(String.format("%-25s", "用户总数：") + userMapper.selectCount());
         stringJoiner.add(String.format("%-25s", "在线用户：") + userInfoMapper.selectCountActive());
         stringJoiner.add(String.format("%-25s", "群数：") + groupInfoMapper.selectCount());
-        LocalDateTime time = LocalDateTime.now();
-        //减去一分钟
-        time = time.minusMinutes(1);
-        //过去一分钟系统新增的消息数
-        int messageNum = messageMapper.selectCountBeforeTime(time.toString());
-        stringJoiner.add(String.format("%-25s", "每秒钟流通消息数：") + String.format("%.2f", (double) messageNum / 60));
         return stringJoiner.toString();
     }
 }
