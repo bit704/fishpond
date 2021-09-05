@@ -23,6 +23,12 @@ public interface FriendshipMapper {
             + " where uid1 = #{uid} or uid2 = #{uid}")
     public List<FriendshipDO> selectById(@Param("uid") int uid);
 
+    @Select("select count(*) from "
+            + tableName
+            + " where uid1 = #{uid} or uid2 = #{uid}")
+    public int selectFriendNumById(@Param("uid") int uid);
+
+
     @Select("Select * from "
             + tableName
             + " where ${columnName} = ${columnValue}")

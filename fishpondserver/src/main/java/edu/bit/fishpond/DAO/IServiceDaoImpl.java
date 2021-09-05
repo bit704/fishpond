@@ -98,6 +98,7 @@ public class IServiceDaoImpl implements IServiceDao {
     }
 
     private String message2String(MessageDO messageDO) {
+        if(messageDO==null) return "";
         StringJoiner message = new StringJoiner("#");
         message.add(String.valueOf(messageDO.getSender()));
         message.add(String.valueOf(messageDO.getReceiver()));
@@ -123,7 +124,7 @@ public class IServiceDaoImpl implements IServiceDao {
                 null,
                 false,
                 now.toString(),
-                "null",
+                "2021-01-01 00:00:00",
                 true);
         if (insertNum2 != 1) {
             throw new DAOException("注册新用户失败");
@@ -159,6 +160,7 @@ public class IServiceDaoImpl implements IServiceDao {
 
     @Override
     public void recordFriendRequest(int applierId, int recipientId, String explain, String sendTime) throws DAOException {
+        if(!hadUser(recipientId)) throw new DAOException("不存在此好友");
         int insertNum = friendRequestMapper.insertOne(applierId, recipientId, explain, sendTime);
         if (insertNum != 1) throw new DAOException("好友申请失败");
         return;
@@ -177,8 +179,7 @@ public class IServiceDaoImpl implements IServiceDao {
         //获取用户上次离线时间
         String time = userInfoDO.getLast_offline();
         if(time == null) return new ArrayList<>();
-        LocalDateTime last_offline = LocalDateTime.parse(time);
-        List<MessageDO> messageDOList = messageMapper.selectByReceiverBeforeTime(recipientId, last_offline.toString());
+        List<MessageDO> messageDOList = messageMapper.selectByReceiverBeforeTime(recipientId, time);
         return messages2Strings(messageDOList);
     }
 

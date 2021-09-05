@@ -18,11 +18,16 @@ public interface UserMapper {
             + tableName)
     public List<UserDO> selectAll();
 
+    @Select("select count(*) from "
+            + tableName)
+    public int selectCount();
+
+
     @Select("Select * from "
             + tableName
             + " where ${columnName} = ${columnValue}")
     public List<UserDO> selectBatch(@Param("columnName") String columnName,
-                              @Param("columnValue") String columnValue);
+                                    @Param("columnValue") String columnValue);
 
     @Select("Select * from "
             + tableName
@@ -67,6 +72,7 @@ public interface UserMapper {
 
     /**
      * 获取下一个序列号
+     *
      * @return 下一个序列号
      */
     @Select("select last_value from fishpond.user_uid_seq")

@@ -15,6 +15,5 @@ public class QMTest extends FishpondOpsApplicationTests{
 
     @Test
     public void test() {
-        queryService.getAllUsers().forEach(userInfoDO -> System.out.println(userInfoDO));
     }
 }
