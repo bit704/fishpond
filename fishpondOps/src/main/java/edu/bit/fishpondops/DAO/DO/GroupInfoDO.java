@@ -32,6 +32,30 @@ public class GroupInfoDO {
      */
     private boolean real;
 
+    public int getGid() {
+        return gid;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public int getCreator() {
+        return creator;
+    }
+
+    public String getCreate_time() {
+        return create_time;
+    }
+
+    public int getManager() {
+        return manager;
+    }
+
+    public boolean isReal() {
+        return real;
+    }
+
     @Override
     public String toString() {
         return "GroupInfoDO{" +

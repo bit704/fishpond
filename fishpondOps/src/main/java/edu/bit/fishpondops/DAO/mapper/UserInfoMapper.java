@@ -18,6 +18,11 @@ public interface UserInfoMapper {
             + tableName)
     public List<UserInfoDO> selectAll();
 
+    @Select("select count(*) from "
+            + tableName
+            + " where state = true")
+    public int selectCountActive();
+
     @Select("select name from "
             + tableName
             + " where uid = ${uid}")
@@ -41,9 +46,8 @@ public interface UserInfoMapper {
 
     @Select("select * from "
             + tableName
-    + " where name like '%${subName}%'")
+            + " where name like '%${subName}%'")
     public List<UserInfoDO> selectBySubName(@Param("subName") String subName);
-
 
     @Insert("insert into "
             + tableName

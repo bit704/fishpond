@@ -34,6 +34,11 @@ public interface MessageMapper {
     public List<MessageDO> selectByReceiverBeforeTime(@Param("receiver") int receiver,
                                                      @Param("send_time") String send_time);
 
+    @Select("select count(*) from "
+            + tableName
+            + " where send_time >= #{send_time}")
+    public int selectCountBeforeTime(@Param("send_time") String send_time);
+
     @Insert("insert into "
             + tableName
             + sql_insertColumns
