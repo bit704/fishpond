@@ -64,6 +64,7 @@ public interface MessageMapper {
     public int deleteBatch(@Param("columnName") String columnName,
                            @Param("columnValue") String columnValue);
 
+
     @Update("truncate table "
             + tableName)
     public int deleteAll();

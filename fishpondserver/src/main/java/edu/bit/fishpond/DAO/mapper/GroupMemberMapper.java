@@ -29,6 +29,11 @@ public interface GroupMemberMapper {
             + " where memberID = #{memberID}")
     public List<Integer> selectGroupByUser(@Param("memberID") int memberID);
 
+    @Select("select memberID from "
+            + tableName
+            + " where gid = #{gid}")
+    public List<Integer> selectGroupMemberListById(@Param("gid") int gid);
+
     @Insert("insert into "
             + tableName
             + sql_insertColumns

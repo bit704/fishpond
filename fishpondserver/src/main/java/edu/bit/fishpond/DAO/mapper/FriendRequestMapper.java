@@ -44,6 +44,13 @@ public interface FriendRequestMapper {
     public int deleteBatch(@Param("columnName") String columnName,
                            @Param("columnValue") String columnValue);
 
+    @Select("select count(*) from "
+            + tableName
+            + " where requester = #{requester} and receiver = #{receiver}")
+    public int selectByPK(@Param("requester") int requester,
+                          @Param("receiver") int receiver);
+
+
     @Delete("delete from "
             + tableName
             + " where requester = #{requester} and receiver = #{receiver}")

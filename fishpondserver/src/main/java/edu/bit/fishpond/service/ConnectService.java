@@ -1,7 +1,7 @@
 package edu.bit.fishpond.service;
 
 import edu.bit.fishpond.service.entity.LoginClientEntity;
-import edu.bit.fishpond.service.entity.UserIdEntity;
+import edu.bit.fishpond.service.entity.SingleIntEntity;
 import edu.bit.fishpond.utils.DAOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +22,10 @@ public class ConnectService {
 
     public boolean login(LoginClientEntity loginClientEntity) throws DAOException {
         int loginId = loginClientEntity.getLoginUserId();
+        if (!iServiceDao.queryUserIdExist(loginId)){
+            logger.warn("用户不存在：" + loginId);
+            return false;
+        }
         String passwordHash = loginClientEntity.getPasswordHash();
         boolean queryResult = iServiceDao.checkPassword(loginId, passwordHash);
         if (queryResult){
@@ -41,8 +45,10 @@ public class ConnectService {
         return queryResult;
     }
 
-    public void offLine(UserIdEntity userIdEntity) throws DAOException {
-        int offLineId = userIdEntity.getUserId();
+    public void offLine(SingleIntEntity singleIntEntity) throws DAOException {
+        int offLineId = singleIntEntity.getUserId();
         iServiceDao.updateOnlineStatusById(offLineId);
     }
+
+
 }
