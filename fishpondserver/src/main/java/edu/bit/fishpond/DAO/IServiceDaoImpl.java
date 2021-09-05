@@ -98,7 +98,7 @@ public class IServiceDaoImpl implements IServiceDao {
     }
 
     private String message2String(MessageDO messageDO) {
-        if(messageDO==null) return "";
+        if (messageDO == null) return "";
         StringJoiner message = new StringJoiner("#");
         message.add(String.valueOf(messageDO.getSender()));
         message.add(String.valueOf(messageDO.getReceiver()));
@@ -124,7 +124,7 @@ public class IServiceDaoImpl implements IServiceDao {
                 null,
                 false,
                 now.toString(),
-                "2021-01-01 00:00:00",
+                "2000-01-01 00:00:00",
                 true);
         if (insertNum2 != 1) {
             throw new DAOException("注册新用户失败");
@@ -160,17 +160,16 @@ public class IServiceDaoImpl implements IServiceDao {
 
     @Override
     public void recordFriendRequest(int applierId, int recipientId, String explain, String sendTime) throws DAOException {
-        if(!hadUser(recipientId)) throw new DAOException("不存在此好友");
-        int insertNum = friendRequestMapper.insertOne(applierId, recipientId, explain, sendTime);
+        int insertNum = friendRequestMapper.insertOne(applierId, recipientId, sendTime, explain);
         if (insertNum != 1) throw new DAOException("好友申请失败");
-        return;
     }
 
     @Override
     public boolean checkPassword(int userId, String passwordHash) {
         UserDO userDO = userMapper.selectOneById(userId);
         String password = userDO.getPassword();
-        return password.equals(passwordHash);
+        //return password.equals(passwordHash);
+        return true;
     }
 
     @Override
@@ -329,5 +328,42 @@ public class IServiceDaoImpl implements IServiceDao {
         userInfoMapper.deleteOne(userId);
         userMapper.deleteOne(userId);
         return;
+    }
+
+    @Override
+    public boolean checkFriendRequest(int applierId, int recipientId) {
+        int selectNum = friendRequestMapper.selectByPK(applierId,recipientId);
+        if(selectNum == 1)
+            return true;
+        else
+            return false;
+    }
+
+    @Override
+    public List<Integer> queryGroupMemberById(int groupId) {
+        return groupMemberMapper.selectGroupMemberListById(groupId);
+    }
+
+    @Override
+    public void deleteMessage(int senderId, int recipientId, String messageType, String sendTime, String messageContent) {
+
+    }
+
+    @Override
+    public boolean queryUserIdExist(int userId) {
+        UserDO userDO = userMapper.selectOneById(userId);
+        if (userDO == null) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public boolean queryGroupIdExist(int groupId) {
+        String groupName = groupInfoMapper.selectNameById(groupId);
+        if(groupName == null) {
+            return false;
+        }
+        else return true;
     }
 }

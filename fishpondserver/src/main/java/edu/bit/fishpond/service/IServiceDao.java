@@ -8,7 +8,6 @@ public interface IServiceDao {
 
     /**
      * 清空数据库
-     * @return 是否清空成功
      */
     void clearDAO();
     /**
@@ -166,10 +165,49 @@ public interface IServiceDao {
      */
     List<String> queryGroupByUserId(int userId);
 
+    //String queryGroupNameById(int groupId);
+
     /**
      * 删除指定id对应的用户
      * @param userId 用户id
      */
     void deleteUser(int userId);
+
+    /**
+     * 检查好友申请是否已经存在
+     * @return 是否存在
+     */
+    boolean checkFriendRequest(int applierId, int recipientId);
+
+    /**
+     * 通过群id查询该群所有群成员
+     * @param groupId 群id
+     * @return 群成员的id列表
+     */
+    List<Integer> queryGroupMemberById(int groupId);
+
+    /**
+     * 删除这条消息
+     * @param senderId 发送者Id
+     * @param recipientId 接收者Id
+     * @param messageType 消息类型
+     * @param sendTime 发送时间
+     * @param messageContent 消息内容
+     */
+    void deleteMessage(int senderId, int recipientId, String messageType, String sendTime, String messageContent);
+
+    /**
+     * 查询该id是否存在
+     * @param userId 要查询的id
+     * @return 是否存在
+     */
+    boolean queryUserIdExist(int userId);
+
+    /**
+     * 查询群id是否存在
+     * @param groupId 要查询的id
+     * @return 是否存在
+     */
+    boolean queryGroupIdExist(int groupId);
 
 }

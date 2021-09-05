@@ -4,8 +4,8 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
 import edu.bit.fishpond.service.ConnectService;
+import edu.bit.fishpond.service.GroupService;
 import edu.bit.fishpond.service.ServerMessage;
-import edu.bit.fishpond.service.ServiceResult;
 import edu.bit.fishpond.service.entity.*;
 import edu.bit.fishpond.service.UserService;
 import edu.bit.fishpond.utils.DAOException;
@@ -17,9 +17,10 @@ import org.springframework.stereotype.Component;
 
 import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;
-import java.io.IOException;
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.List;
-import java.util.Map;
 
 import static javax.websocket.CloseReason.CloseCodes.GOING_AWAY;
 
@@ -30,14 +31,18 @@ public class WebSocketConnect {
 
     private Session session;
     private int id = 0;
+    private String currentFilename;
+    private String currentFileExtensionName;
 
     private static UserService userService;
     private static ConnectService connectService;
+    private static GroupService groupService;
 
     @Autowired
-    public void setUserService(UserService  userService, ConnectService connectService){
+    public void setUserService(UserService  userService, ConnectService connectService, GroupService groupService){
         WebSocketConnect.userService = userService;
         WebSocketConnect.connectService = connectService;
+        WebSocketConnect.groupService = groupService;
     }
 
     @OnOpen
@@ -48,15 +53,57 @@ public class WebSocketConnect {
 
     @OnClose
     public void onClose(CloseReason closeReason){
+        logger.info("关闭原因：" + closeReason.getCloseCode() + ",关闭原因描述：" + closeReason.getReasonPhrase());
         if (id != 0) {
             WebSocketServer.DisConnect(id);
+            SingleIntEntity singleIntEntity = new SingleIntEntity();
+            singleIntEntity.setUserId(id);
+            try {
+                connectService.offLine(singleIntEntity);
+            } catch (DAOException daoException) {
+                daoException.printStackTrace();
+            }
             logger.info(String.format("与%d的会话已关闭",id));
         }
         else {
             logger.info(String.format("与%s的会话已关闭",session.getId()));
         }
-        logger.info("关闭原因：" + closeReason.getCloseCode() + ",关闭原因描述：" + closeReason.getReasonPhrase());
+
+
+
     }
+
+    @OnMessage
+    public void onBytesMessage(ByteBuffer byteBuffer){
+        byteBuffer.flip();
+        try {
+            String filePathPrefix = "./FileStorage/" + id + "/" + currentFilename;
+            String filePath = filePathPrefix.concat(".").concat(currentFileExtensionName);
+            logger.info(filePath);
+            File file = new File(filePath);
+            int index = 1;
+            // 如果文件已存在，自动重新命名
+            while (!file.exists()){
+                filePathPrefix = filePathPrefix.concat("(" + index + ")");
+                filePath = filePathPrefix.concat(".").concat(currentFileExtensionName);
+                file = new File(filePath);
+                index++;
+            }
+            FileOutputStream outputStream = new FileOutputStream(file, true);
+            FileChannel outChannel = outputStream.getChannel();
+            outChannel.write(byteBuffer);
+
+            outChannel.close();
+            outputStream.close();
+        }
+        catch (IOException ioException){
+            logger.error(String.format("未能写入客户端：%d发来ByteBuffer",
+                    id == 0 ? Integer.parseInt(session.getId()) : id));
+            ioException.printStackTrace();
+        }
+    }
+
+
 
     @OnMessage
     public void onMessage(String message){
@@ -74,7 +121,6 @@ public class WebSocketConnect {
         String body = messageSplitArray[1];
         String sendMessageBody;
         String sendMessageHead;
-        ServiceResult result;
         List<ServerMessage> serverMessageList;
         //根据消息头解析消息体
         try {
@@ -114,38 +160,41 @@ public class WebSocketConnect {
                     sendServerMessage(serverMessageList);
                     break;
                 case "GetFriendList":
-                    UserIdEntity userIdEntity = JSONObject.parseObject(body, UserIdEntity.class);
-                    sendMessageBody = userService.getFriendList(userIdEntity);
+                    SingleIntEntity singleIntEntity = JSONObject.parseObject(body, SingleIntEntity.class);
+                    sendMessageBody = userService.getFriendList(singleIntEntity);
                     sendMessageHead = "FriendList";
                     sendMessageDirect(sendMessageHead, sendMessageBody);
                     break;
                 case "GetLatestMessage":
-                    UserIdEntity getLatestMessageUserIdEntity = JSONObject.parseObject(body,UserIdEntity.class);
-                    sendMessageBody = userService.getLatestMessage(getLatestMessageUserIdEntity);
+                    SingleIntEntity getLatestMessageSingleIntEntity = JSONObject.parseObject(body, SingleIntEntity.class);
+                    sendMessageBody = userService.getLatestMessage(getLatestMessageSingleIntEntity);
                     sendMessageHead = "LatestMessage";
                     sendMessageDirect(sendMessageHead, sendMessageBody);
                     break;
                 case "GetUnreadMessage":
-                    UserIdEntity getUnreadMessageUserIdEntity = JSONObject.parseObject(body, UserIdEntity.class);
-                    serverMessageList = userService.getUnreadMessage(getUnreadMessageUserIdEntity);
+                    SingleIntEntity getUnreadMessageSingleIntEntity = JSONObject.parseObject(body, SingleIntEntity.class);
+                    serverMessageList = userService.getUnreadMessage(getUnreadMessageSingleIntEntity);
                     sendServerMessage(serverMessageList);
                     break;
                 case "GetUnreadFriendRequest":
-                    UserIdEntity getUnreadFriendRequest = JSONObject.parseObject(body, UserIdEntity.class);
+                    SingleIntEntity getUnreadFriendRequest = JSONObject.parseObject(body, SingleIntEntity.class);
                     serverMessageList = userService.getUnreadFriendRequestHandler(getUnreadFriendRequest);
                     sendServerMessage(serverMessageList);
                     break;
                 case "GetMessageBetween":
                     PersonMessageClientEntity personMessageClientEntity =
                             JSONObject.parseObject(body,PersonMessageClientEntity.class);
-                    result = userService.getAllMessageBetween(personMessageClientEntity);
-                    resultHandler(result);
+                    serverMessageList = userService.getAllMessageBetweenHandler(personMessageClientEntity);
+                    sendServerMessage(serverMessageList);
                     break;
                 case "GetGroupList":
+                    SingleIntEntity groupListSingleIntEntity = JSONObject.parseObject(body, SingleIntEntity.class);
+                    serverMessageList = groupService.getGroupListHandler(groupListSingleIntEntity);
+                    sendServerMessage(serverMessageList);
                     break;
                 case "GetAllMessage":
-                    UserIdEntity getMessageUserIdEntity = JSONObject.parseObject(body,UserIdEntity.class);
-                    sendMessageBody = userService.getAllMessage(getMessageUserIdEntity);
+                    SingleIntEntity getMessageSingleIntEntity = JSONObject.parseObject(body, SingleIntEntity.class);
+                    sendMessageBody = userService.getAllMessage(getMessageSingleIntEntity);
                     sendMessageHead = "AllMessage";
                     sendMessageDirect(sendMessageHead, sendMessageBody);
                     break;
@@ -154,20 +203,33 @@ public class WebSocketConnect {
                     serverMessageList = userService.sendMessageHandler(sendMessageEntity);
                     sendServerMessage(serverMessageList);
                     break;
+                case "SendFileTo":
+                    FileEntity fileEntity = JSONObject.parseObject(body, FileEntity.class);
+                    currentFilename = fileEntity.getFileName();
+                    currentFileExtensionName = fileEntity.getExtensionName();
+                    break;
                 case "SearchUser":
                     SearchUserClientEntity searchUserClientEntity =
                             JSONObject.parseObject(body, SearchUserClientEntity.class);
                     serverMessageList = userService.searchUserHandler(searchUserClientEntity);
                     sendServerMessage(serverMessageList);
                     break;
+                case "CreateGroup":
+                    GroupCreateClientEntity entity = JSONObject.parseObject(body, GroupCreateClientEntity.class);
+                    serverMessageList = groupService.groupCreateHandler(entity);
+                    sendServerMessage(serverMessageList);
                 case "GetUserInfo":
-                    UserIdEntity getUserInfoUserIdEntity = JSON.parseObject(body, UserIdEntity.class);
-                    serverMessageList = userService.getUserInfo(getUserInfoUserIdEntity);
+                    SingleIntEntity getUserInfoSingleIntEntity = JSON.parseObject(body, SingleIntEntity.class);
+                    serverMessageList = userService.getUserInfo(getUserInfoSingleIntEntity);
                     sendServerMessage(serverMessageList);
                     break;
+                case "GetGroupMembers":
+                    SingleIntEntity groupIdEntity = JSONObject.parseObject(body, SingleIntEntity.class);
+                    serverMessageList = groupService.getGroupMember(groupIdEntity);
+                    sendServerMessage(serverMessageList);
                 case "OffLine":
-                    UserIdEntity offLineUserIdEntity = JSONObject.parseObject(body, UserIdEntity.class);
-                    connectService.offLine(offLineUserIdEntity);
+                    SingleIntEntity offLineSingleIntEntity = JSONObject.parseObject(body, SingleIntEntity.class);
+                    connectService.offLine(offLineSingleIntEntity);
                     onClose(new CloseReason(GOING_AWAY,"账号在别的位置登录"));
                     break;
                 default:
@@ -179,9 +241,11 @@ public class WebSocketConnect {
         }
         catch (JSONException jsonException) {
             logger.warn(String.format("无法解析:%s,未知的消息体%s",message,body));
+            jsonException.printStackTrace();
         }
         catch (IOException ioException){
             logger.error("ioException");
+            ioException.printStackTrace();
         }
         catch (DAOException daoException) {
             ErrorEntity errorEntity = new ErrorEntity();
@@ -189,6 +253,7 @@ public class WebSocketConnect {
             sendMessageBody = JSON.toJSONString(errorEntity);
             sendMessageHead = "Error";
             sendMessageDirect(sendMessageHead, sendMessageBody);
+            daoException.printStackTrace();
         }
     }
 
@@ -228,19 +293,6 @@ public class WebSocketConnect {
 
     }
 
-    private void resultHandler(ServiceResult result){
-        if (result.isSendMessage()){
-            for (Map.Entry<Integer, String> entry: result.getSenderMessageMap().entrySet()) {
-                if (entry.getKey() == 0){
-                    sendMessageDirect(entry.getValue());
-                }
-                else {
-                    WebSocketServer.SendMessageTo(entry.getKey(), entry.getValue());
-                }
-            }
-        }
-    }
-
     private void sendServerMessage(List<ServerMessage> serverMessageList){
         for (ServerMessage serverMessage: serverMessageList) {
             int targetId = serverMessage.getTargetId();
@@ -251,6 +303,7 @@ public class WebSocketConnect {
                 WebSocketServer.SendMessageTo(targetId, serverMessage.getMessage());
             }
         }
+
     }
 
 
