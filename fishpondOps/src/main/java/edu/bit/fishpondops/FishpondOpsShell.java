@@ -18,6 +18,9 @@ public class FishpondOpsShell {
     @Autowired
     MockService mockService;
 
+    @Autowired
+    ClientService clientService;
+
     @ShellMethod("展示用户详情")
     public String showUser(@ShellOption(value = {"-all"}, defaultValue = "false", help = "是否展示全部用户") boolean all,
                            @ShellOption(value = {"-N", "-num"}, defaultValue = "0", help = "展示用户数量") int num,
@@ -42,6 +45,12 @@ public class FishpondOpsShell {
         }
     }
 
+    @ShellMethod("清空数据库")
+    public void clearDb() {
+        queryService.clearDb();
+    }
+
+
     @ShellMethod("查看数据库情况")
     public String checkDb() {
         return queryService.getDb();
@@ -54,12 +63,14 @@ public class FishpondOpsShell {
     }
 
     @ShellMethod("执行压力测试")
-    public String pressureTest(@ShellOption(value = {"-N", "--num"}) int num) {
+    public String pressureTest(@ShellOption(value = {"-N", "-num"}) int num) {
         System.out.println("创建虚拟客户端数量："+num);
-        ClientService.initFakeClient(num);
-        ClientService.activeClient();
+        clientService.reset();
+        clientService.initFakeClient(num);
+        clientService.activeClient();
+        clientService.reset();
         return  "执行完毕";
     }
-    //pressure-test --num 1
+    //pressure-test --num 100
 
 }

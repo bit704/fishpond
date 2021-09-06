@@ -9,28 +9,38 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Random;
 import java.util.StringJoiner;
 
 @Component
 public class QueryService {
 
     @Autowired
-    UserInfoMapper userInfoMapper;
-
-    @Autowired
     UserMapper userMapper;
 
     @Autowired
-    GroupInfoMapper groupInfoMapper;
+    UserInfoMapper userInfoMapper;
+
+    @Autowired
+    FriendRequestMapper friendRequestMapper;
+
+    @Autowired
+    MessageMapper messageMapper;
 
     @Autowired
     FriendshipMapper friendshipMapper;
 
     @Autowired
+    SysMessageMapper sysMessageMapper;
+
+    @Autowired
+    GroupInfoMapper groupInfoMapper;
+
+    @Autowired
     GroupMemberMapper groupMemberMapper;
 
     @Autowired
-    MessageMapper messageMapper;
+    GroupMessageMapper groupMessageMapper;
 
     /**
      * 用户信息的中文表示
@@ -189,18 +199,25 @@ public class QueryService {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-
-            LocalDateTime time = LocalDateTime.now();
-            //减去一分钟
-            time = time.minusMinutes(1);
-            //过去一分钟系统新增的消息数
-            int messageNum = messageMapper.selectCountBeforeTime(time.toString());
-            DateTimeFormatter dTF = DateTimeFormatter.ofPattern("yyyy年MM月dd日 HH时mm分ss秒");
-            System.out.println((String.format("%-25s", "统计时间：") + dTF.format(LocalDateTime.now())));
-            System.out.println((String.format("%-25s", "每秒钟流通消息数(按分)：") + String.format("%.2f", (double) messageNum / 60)));
+            queryMessages();
         }
         return;
 
+    }
+
+    /**
+     * 查询消息流通性
+     */
+    public void queryMessages() {
+        Random random = new Random();
+        LocalDateTime time = LocalDateTime.now();
+        //减去一分钟
+        time = time.minusSeconds(5);
+        //过去一分钟系统新增的消息数
+        int messageNum = messageMapper.selectCountBeforeTime(time.toString());
+        DateTimeFormatter dTF = DateTimeFormatter.ofPattern("yyyy年MM月dd日 HH时mm分ss秒");
+        System.out.println((String.format("%-25s", "统计时间：") + dTF.format(LocalDateTime.now())));
+        System.out.println((String.format("%-25s", "每秒钟流通消息数：") + String.format("%.2f", (double) messageNum)));
     }
 
     /**
@@ -216,5 +233,20 @@ public class QueryService {
         stringJoiner.add(String.format("%-25s", "在线用户：") + userInfoMapper.selectCountActive());
         stringJoiner.add(String.format("%-25s", "群数：") + groupInfoMapper.selectCount());
         return stringJoiner.toString();
+    }
+
+    /**
+     * 清空数据库
+     */
+    public void clearDb() {
+        userMapper.deleteAll();
+        userInfoMapper.deleteAll();
+        groupInfoMapper.deleteAll();
+        groupMemberMapper.deleteAll();
+        groupMessageMapper.deleteAll();
+        messageMapper.deleteAll();
+        sysMessageMapper.deleteAll();
+        friendRequestMapper.deleteAll();
+        friendshipMapper.deleteAll();
     }
 }
