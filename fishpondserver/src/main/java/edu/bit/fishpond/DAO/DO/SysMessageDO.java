@@ -3,6 +3,11 @@ package edu.bit.fishpond.DAO.DO;
 public class SysMessageDO {
 
     /**
+     * 唯一标识
+     */
+    private int smid;
+
+    /**
      * 目标用户ID
      */
     private int user;

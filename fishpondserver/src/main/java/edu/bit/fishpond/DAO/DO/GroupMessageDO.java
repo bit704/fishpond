@@ -3,6 +3,11 @@ package edu.bit.fishpond.DAO.DO;
 public class GroupMessageDO {
 
     /**
+     * 唯一编号
+     */
+    private int gmid;
+
+    /**
      * 申请者编号
      */
     private int sender;
