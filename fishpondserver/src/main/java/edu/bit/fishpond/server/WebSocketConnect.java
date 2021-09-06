@@ -3,11 +3,8 @@ package edu.bit.fishpond.server;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
-import edu.bit.fishpond.service.ConnectService;
-import edu.bit.fishpond.service.GroupService;
-import edu.bit.fishpond.service.ServerMessage;
+import edu.bit.fishpond.service.*;
 import edu.bit.fishpond.service.entity.*;
-import edu.bit.fishpond.service.UserService;
 import edu.bit.fishpond.utils.DAOException;
 import edu.bit.fishpond.utils.MessageHeadException;
 import org.slf4j.Logger;
@@ -37,12 +34,16 @@ public class WebSocketConnect {
     private static UserService userService;
     private static ConnectService connectService;
     private static GroupService groupService;
+    private static MessageService messageService;
 
     @Autowired
-    public void setUserService(UserService  userService, ConnectService connectService, GroupService groupService){
+    public void setUserService
+            (UserService  userService, ConnectService connectService, GroupService groupService,
+            MessageService messageService){
         WebSocketConnect.userService = userService;
         WebSocketConnect.connectService = connectService;
         WebSocketConnect.groupService = groupService;
+        WebSocketConnect.messageService = messageService;
     }
 
     @OnOpen
@@ -75,6 +76,7 @@ public class WebSocketConnect {
 
     @OnMessage
     public void onBytesMessage(ByteBuffer byteBuffer){
+        logger.info(String.format("客户端:%d发送了文件：%s",id,byteBuffer));
         byteBuffer.flip();
         try {
             String filePathPrefix = "./FileStorage/" + id + "/" + currentFilename;
@@ -167,13 +169,12 @@ public class WebSocketConnect {
                     break;
                 case "GetLatestMessage":
                     SingleIntEntity getLatestMessageSingleIntEntity = JSONObject.parseObject(body, SingleIntEntity.class);
-                    sendMessageBody = userService.getLatestMessage(getLatestMessageSingleIntEntity);
-                    sendMessageHead = "LatestMessage";
-                    sendMessageDirect(sendMessageHead, sendMessageBody);
+                    serverMessageList = messageService.getLatestMessageHandler(getLatestMessageSingleIntEntity);
+                    sendServerMessage(serverMessageList);
                     break;
                 case "GetUnreadMessage":
                     SingleIntEntity getUnreadMessageSingleIntEntity = JSONObject.parseObject(body, SingleIntEntity.class);
-                    serverMessageList = userService.getUnreadMessage(getUnreadMessageSingleIntEntity);
+                    serverMessageList = messageService.getUnreadMessage(getUnreadMessageSingleIntEntity);
                     sendServerMessage(serverMessageList);
                     break;
                 case "GetUnreadFriendRequest":
@@ -184,7 +185,7 @@ public class WebSocketConnect {
                 case "GetMessageBetween":
                     PersonMessageClientEntity personMessageClientEntity =
                             JSONObject.parseObject(body,PersonMessageClientEntity.class);
-                    serverMessageList = userService.getAllMessageBetweenHandler(personMessageClientEntity);
+                    serverMessageList = messageService.getAllMessageBetweenHandler(personMessageClientEntity);
                     sendServerMessage(serverMessageList);
                     break;
                 case "GetGroupList":
@@ -192,15 +193,9 @@ public class WebSocketConnect {
                     serverMessageList = groupService.getGroupListHandler(groupListSingleIntEntity);
                     sendServerMessage(serverMessageList);
                     break;
-                case "GetAllMessage":
-                    SingleIntEntity getMessageSingleIntEntity = JSONObject.parseObject(body, SingleIntEntity.class);
-                    sendMessageBody = userService.getAllMessage(getMessageSingleIntEntity);
-                    sendMessageHead = "AllMessage";
-                    sendMessageDirect(sendMessageHead, sendMessageBody);
-                    break;
                 case "SendMessageTo":
                     MessageEntity sendMessageEntity = JSONObject.parseObject(body, MessageEntity.class);
-                    serverMessageList = userService.sendMessageHandler(sendMessageEntity);
+                    serverMessageList = messageService.sendMessageHandler(sendMessageEntity);
                     sendServerMessage(serverMessageList);
                     break;
                 case "SendFileTo":
@@ -268,7 +263,7 @@ public class WebSocketConnect {
         error.printStackTrace();
     }
 
-    public void sendMessageDirect(String head, String body) {
+    private void sendMessageDirect(String head, String body) {
         String message = head + "|" + body;
         session.getAsyncRemote().sendText(message, sendResult -> {
             if (!sendResult.isOK()){
@@ -281,7 +276,7 @@ public class WebSocketConnect {
 
     }
     
-    public void sendMessageDirect(String message) {
+    private void sendMessageDirect(String message) {
         session.getAsyncRemote().sendText(message, sendResult -> {
             if (!sendResult.isOK()){
                 logger.error(sendResult.getException().getMessage());

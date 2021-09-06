@@ -144,7 +144,7 @@ public class IServiceDaoImpl implements IServiceDao {
     }
 
     @Override
-    public void updateOnlineStatusById(int userId) throws DAOException {
+    public void updateOnlineStatus(int userId) throws DAOException {
         if (!hadUser(userId)) throw new DAOException("没有此用户");
         boolean state = userInfoMapper.selectState(userId);
         if (state == true) {
@@ -159,7 +159,7 @@ public class IServiceDaoImpl implements IServiceDao {
     }
 
     @Override
-    public void recordFriendRequest(int applierId, int recipientId, String explain, String sendTime) throws DAOException {
+    public void recordNewFriendRequest(int applierId, int recipientId, String explain, String sendTime) throws DAOException {
         int insertNum = friendRequestMapper.insertOne(applierId, recipientId, sendTime, explain);
         if (insertNum != 1) throw new DAOException("好友申请失败");
     }
@@ -183,22 +183,13 @@ public class IServiceDaoImpl implements IServiceDao {
     }
 
     @Override
-    public List<String> queryAllMessage(int userId) {
-        UserInfoDO userInfoDO = userInfoMapper.selectOneById(userId);
-        List<MessageDO> messageDOList = new LinkedList<>();
-        messageDOList.addAll(messageMapper.selectByReceiver(userId));
-        messageDOList.addAll(messageMapper.selectBySender(userId));
-        return messages2Strings(messageDOList);
-    }
-
-    @Override
     public List<String> queryAllMessageBetween(int userId1, int userId2) {
         return messages2Strings(messageMapper.selectByPartner(userId1,userId2));
     }
 
 
     @Override
-    public List<String> queryFriendRequest(int recipientId) {
+    public List<String> queryFriendRequestList(int recipientId) {
         List<FriendRequestDO> friendRequestDOList = friendRequestMapper.selectByReceiver(recipientId);
         List<String> result = new LinkedList<>();
         for (FriendRequestDO friendRequestDO : friendRequestDOList) {
@@ -212,7 +203,7 @@ public class IServiceDaoImpl implements IServiceDao {
     }
 
     @Override
-    public void recordFriendship(int userId1, int userId2, String beFriendTime) throws DAOException {
+    public void recordNewFriendship(int userId1, int userId2, String beFriendTime) throws DAOException {
         int insertNum = friendshipMapper.insertOne(userId1,userId2,beFriendTime);
         if(insertNum != 1) throw new DAOException("添加好友关系失败");
         return;
@@ -233,7 +224,7 @@ public class IServiceDaoImpl implements IServiceDao {
     }
 
     @Override
-    public List<Integer> queryFriendshipById(int senderId) {
+    public List<Integer> queryFriendList(int senderId) {
         //查询好友列表
         List<FriendshipDO> friendshipDOList = friendshipMapper.selectById(senderId);
         List<Integer> friendList = new LinkedList<>();
@@ -287,7 +278,7 @@ public class IServiceDaoImpl implements IServiceDao {
     }
 
     @Override
-    public List<String> queryLatestMessage(int userId) {
+    public List<String> queryLatestMessageList(int userId) {
         List<FriendshipDO> friendshipDOList = friendshipMapper.selectById(userId);
         List<Integer> friendList = new LinkedList<>();
         for(FriendshipDO friendshipDO : friendshipDOList) {
@@ -314,7 +305,7 @@ public class IServiceDaoImpl implements IServiceDao {
     }
 
     @Override
-    public List<String> queryGroupByUserId(int userId) {
+    public List<String> queryGroupList(int userId) {
         List<Integer> integers = groupMemberMapper.selectGroupByUser(userId);
         List<String> result = new ArrayList<>();
         for(Integer gid : integers) {
@@ -331,7 +322,7 @@ public class IServiceDaoImpl implements IServiceDao {
     }
 
     @Override
-    public boolean checkFriendRequest(int applierId, int recipientId) {
+    public boolean checkFriendRequestExist(int applierId, int recipientId) {
         int selectNum = friendRequestMapper.selectByPK(applierId,recipientId);
         if(selectNum == 1)
             return true;
@@ -340,17 +331,17 @@ public class IServiceDaoImpl implements IServiceDao {
     }
 
     @Override
-    public List<Integer> queryGroupMemberById(int groupId) {
+    public List<Integer> queryGroupMemberList(int groupId) {
         return groupMemberMapper.selectGroupMemberListById(groupId);
     }
 
     @Override
-    public void deleteMessage(int senderId, int recipientId, String messageType, String sendTime, String messageContent) {
+    public void deleteMessage(int messageId) {
 
     }
 
     @Override
-    public boolean queryUserIdExist(int userId) {
+    public boolean checkUserIdExist(int userId) {
         UserDO userDO = userMapper.selectOneById(userId);
         if (userDO == null) {
             return false;
@@ -359,11 +350,21 @@ public class IServiceDaoImpl implements IServiceDao {
     }
 
     @Override
-    public boolean queryGroupIdExist(int groupId) {
+    public boolean checkGroupIdExist(int groupId) {
         String groupName = groupInfoMapper.selectNameById(groupId);
         if(groupName == null) {
             return false;
         }
         else return true;
+    }
+
+    @Override
+    public int recordNewMessage(int senderId, int recipientId, String messageType, String sendTime, String messageContent) {
+        return 0;
+    }
+
+    @Override
+    public List<Integer> queryUnreadMessageList(int recipientId) {
+        return null;
     }
 }

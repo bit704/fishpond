@@ -40,7 +40,7 @@ public interface IServiceDao {
      * 更新用户的在线状态（直接取反即可）
      * @param userId 用户id
      */
-    void updateOnlineStatusById(int userId) throws DAOException;
+    void updateOnlineStatus(int userId) throws DAOException;
 
     /**
      * 好友申请，添加新的好友申请
@@ -49,7 +49,7 @@ public interface IServiceDao {
      * @param explain 附加信息
      * @param sendTime 申请发送时间
      */
-    void recordFriendRequest(int applierId, int recipientId, String explain, String sendTime) throws DAOException;
+    void recordNewFriendRequest(int applierId, int recipientId, String explain, String sendTime) throws DAOException;
 
     /**
      * 检查用户id和密码是否匹配
@@ -60,33 +60,19 @@ public interface IServiceDao {
     boolean checkPassword(int userId, String passwordHash);
 
     /**
-     * 获取发送给指定用户的未读消息(根据上次离线时间和消息发送时间判断),应按时间顺序从老到新排列
-     * @param recipientId 消息接收者id
-     * @return 未读消息列表（格式：发送者ID#接收者ID#消息类型#发送时间#消息内容）,无则返回empty，绝对不要返回null
-     */
-    List<String> getUnreadMessage(int recipientId);
-
-    /**
-     * 获取所有与该用户有关的消息，按时间顺序从老到新排列
-     * @param userId 用户id
-     * @return 消息列表（格式：发送者ID#接收者ID#消息类型#发送时间#消息内容）
-     */
-    List<String> queryAllMessage(int userId);
-
-    /**
      * 获取两个用户间的所有消息,按时间顺序从老到新排列
      * @param userId1 用户1id
      * @param userId2 用户2id
-     * @return 消息列表（格式：发送者ID#接收者ID#消息类型#发送时间#消息内容）
+     * @return 两个用户间的消息ID列表
      */
-    List<String> queryAllMessageBetween(int userId1, int userId2);
+    List<Integer> queryAllMessageBetween(int userId1, int userId2);
 
     /**
      * 获取该用户作为接收者时的好友申请
      * @param recipientId 用户Id（作为接收者）
      * @return 好友申请列表（格式：发送者ID#发送时间#附加信息）
      */
-    List<String> queryFriendRequest(int recipientId);
+    List<String> queryFriendRequestList(int recipientId);
 
     /**
      * 新的好友关系
@@ -94,7 +80,7 @@ public interface IServiceDao {
      * @param userId2 用户2
      * @param beFriendTime 成为好友的时间
      */
-    void recordFriendship(int userId1, int userId2, String beFriendTime) throws DAOException;
+    void recordNewFriendship(int userId1, int userId2, String beFriendTime) throws DAOException;
 
     /**
      * 新的系统消息
@@ -102,11 +88,13 @@ public interface IServiceDao {
      * @param sendTime 发送时间
      * @param messageType 消息类型
      * @param content 消息内容
+     * @return 返回系统消息id
      */
-    void recordSystemMessage(int userId, String sendTime, String messageType, String content) throws DAOException;
+    int recordSystemMessage(int userId, String sendTime, String messageType, String content) throws DAOException;
 
     /**
-     * 删除指定申请者和接收者的好友申请
+     * 需求更新！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
+     * 删除指定申请者和接收者的好友申请，并同时删除可能出现的申请者、接收者相反的好友申请
      * @param applierId 申请者id
      * @param recipientId 接收者id
      */
@@ -116,7 +104,7 @@ public interface IServiceDao {
      * 通过ID获取该用户的好友列表
      * @return 返回该用户的所有好友Id
      */
-    List<Integer> queryFriendshipById(int senderId);
+    List<Integer> queryFriendList(int senderId);
 
     /**
      * 通过ID获取其信息
@@ -133,21 +121,11 @@ public interface IServiceDao {
     List<String> queryUserInfoByName(String nameSubString);
 
     /**
-     * 记录一条新的消息
-     * @param senderId 发送者Id
-     * @param recipientId 接收者Id
-     * @param messageType 消息类型
-     * @param sendTime 发送时间
-     * @param messageContent 消息内容
-     */
-    void recordMessage(int senderId, int recipientId, String messageType, String sendTime, String messageContent) throws DAOException;
-
-    /**
      * 获取最新的消息
      * @param userId 用户id
-     * @return 与该用户有关的所有消息的最后一条消息（格式：发送者ID#接收者ID#消息类型#发送时间#消息内容）
+     * @return 与该用户有关的所有消息的最后一条消息Id列表
      */
-    List<String> queryLatestMessage(int userId);
+    List<Integer> queryLatestMessageList(int userId);
 
     /**
      * 向群聊中添加新的成员
@@ -159,13 +137,11 @@ public interface IServiceDao {
     void recordNewMember(int groupId, int userId, int invitorId, String inTime) throws DAOException;
 
     /**
-     * 查询id对应用户的所有群聊ID及群聊信息
+     * 查询id对应用户加入的所有群聊ID
      * @param userId 要查询的用户的id
-     * @return 群列表id，格式：群聊id#群聊名称
+     * @return 群id列表
      */
-    List<String> queryGroupByUserId(int userId);
-
-    //String queryGroupNameById(int groupId);
+    List<Integer> queryGroupList(int userId);
 
     /**
      * 删除指定id对应的用户
@@ -177,37 +153,144 @@ public interface IServiceDao {
      * 检查好友申请是否已经存在
      * @return 是否存在
      */
-    boolean checkFriendRequest(int applierId, int recipientId);
+    boolean checkFriendRequestExist(int applierId, int recipientId);
 
     /**
      * 通过群id查询该群所有群成员
      * @param groupId 群id
      * @return 群成员的id列表
      */
-    List<Integer> queryGroupMemberById(int groupId);
+    List<Integer> queryGroupMemberList(int groupId);
 
     /**
      * 删除这条消息
-     * @param senderId 发送者Id
-     * @param recipientId 接收者Id
-     * @param messageType 消息类型
-     * @param sendTime 发送时间
-     * @param messageContent 消息内容
+     * @param messageId 消息Id
      */
-    void deleteMessage(int senderId, int recipientId, String messageType, String sendTime, String messageContent);
+    void deleteMessage(int messageId);
 
     /**
      * 查询该id是否存在
      * @param userId 要查询的id
      * @return 是否存在
      */
-    boolean queryUserIdExist(int userId);
+    boolean checkUserIdExist(int userId);
 
     /**
      * 查询群id是否存在
      * @param groupId 要查询的id
      * @return 是否存在
      */
-    boolean queryGroupIdExist(int groupId);
+    boolean checkGroupIdExist(int groupId);
+
+    /**
+     * 记录一条新的消息
+     * @param senderId 发送者Id
+     * @param recipientId 接收者Id
+     * @param messageType 消息类型
+     * @param sendTime 发送时间
+     * @param messageContent 消息内容
+     * @return 消息的id
+     */
+    int recordNewMessage(int senderId, int recipientId, String messageType, String sendTime, String messageContent);
+
+    /**
+     * 获取发送给指定用户的未读消息(根据上次离线时间和消息发送时间判断),应按时间顺序从老到新排列
+     * @param recipientId 用户Id
+     * @return 返回未读消息ID列表,无则返回empty，绝对不要返回null
+     */
+    List<Integer> queryUnreadMessageList(int recipientId);
+
+    /**
+     * 通过消息的Id查询消息
+     * @param messageId 消息Id
+     * @return 返回该消息的信息（格式：发送者ID#接收者ID#消息类型#发送时间#消息内容）
+     */
+    String queryMessageInfoById(int messageId);
+
+    /**
+     * 检查该id对应的消息是否存在
+     * @param checkId 要检查的id
+     * @return 是否存在
+     */
+    boolean checkMessageExist(int checkId);
+
+    /**
+     * 通过群聊id查询群聊信息
+     * @param groupId 群聊id
+     * @return 群聊信息（格式：群聊名称#创建者id#群主id#创建时间）
+     */
+    String queryGroupInfoById(int groupId);
+
+    /**
+     * 删除指定的群聊
+     * @param groupId 群聊id
+     */
+    void deleteGroup(int groupId);
+
+    /**
+     * 查询该ID对应的系统消息的信息
+     * @param systemMessageId 系统消息id
+     * @return 系统消息信息（格式：目标用户id#发送时间#消息类型#消息内容）
+     */
+    String querySystemMessageInfoById(int systemMessageId);
+
+    /**
+     * 获取该用户未读的系统消息
+     * @param userId 用户id
+     * @return 未读系统消息id列表
+     */
+    List<Integer> queryUnreadSystemMessageList(int userId);
+
+    /**
+     * 获取该用户未读的群消息
+     * @param userId 用户id
+     * @return 未读群消息id列表
+     */
+    List<Integer> queryUnreadGroupMessageList(int userId);
+
+    /**
+     * 记录一条新的消息
+     * @param senderId 发送者Id
+     * @param groupId 群聊Id
+     * @param messageType 消息类型
+     * @param sendTime 发送时间
+     * @param messageContent 消息内容
+     * @return 消息的id
+     */
+    int recordNewGroupMessage(int senderId, int groupId, String messageType, String sendTime, String messageContent);
+
+    /**
+     * 通过群消息的Id查询消息信息
+     * @param messageId 消息Id
+     * @return 返回该消息的信息（格式：发送者ID#接收者ID#消息类型#发送时间#消息内容）
+     */
+    String queryGroupMessageInfoById(int messageId);
+
+    /**
+     * 获取与该用户相关的最新的群消息
+     * @param userId 用户id
+     * @return 与该用户有关的所有群消息的最后一条群消息Id列表
+     */
+    List<Integer> queryLatestGroupMessageList(int userId);
+
+    /**
+     * 删除该群消息
+     * @param groupMessageId 要删除的群消息id
+     */
+    void deleteGroupMessage(int groupMessageId);
+
+    /**
+     * 检查该id对应的消息是否存在
+     * @param checkId 要检查的id
+     * @return 是否存在
+     */
+    boolean checkGroupMessageExist(int checkId);
+
+    /**
+     * 获取这个群的所有消息
+     * @param groupId 群id
+     * @return 该群的所有消息id列表
+     */
+    List<Integer> queryAllMessageIn(int groupId);
 
 }

@@ -52,6 +52,7 @@ public class GroupService {
                 newGroupInfo.setGroupId(groupId);
                 newGroupInfo.setGroupName(groupName);
 
+
                 String sendMessageBody = JSON.toJSONString(newGroupInfo);
                 if (memberId == creatorId) {
                     serverMessageList.add(new ServerMessage(0, "NewGroup", sendMessageBody));
@@ -71,25 +72,13 @@ public class GroupService {
         List<GroupInfoServerEntity> groupInfoList = new ArrayList<>();
 
         int id = entity.getUserId();
-        if (!serviceDao.queryGroupIdExist(id)){
+        if (!serviceDao.checkGroupIdExist(id)){
             return serverMessageList;
         }
-        List<String> queryResult = serviceDao.queryGroupByUserId(id);
+        List<Integer> groupIdList = serviceDao.queryGroupList(id);
 
-        if (!queryResult.isEmpty()){
-            for (String queryLine : queryResult){
-                String[] queryDataArray = queryLine.split("#");
-                if (queryDataArray.length == 2){
-                    GroupInfoServerEntity groupInfoServerEntity = new GroupInfoServerEntity();
-                    groupInfoServerEntity.setGroupId(Integer.parseInt(queryDataArray[0]));
-                    groupInfoServerEntity.setGroupName(queryDataArray[1]);
-                    groupInfoList.add(groupInfoServerEntity);
-                }
-                else {
-                    logger.error(String.format("无法解析数据层数据:%s,解析后实际length为:%d，设定为2",
-                            queryLine,queryDataArray.length));
-                }
-            }
+        for (int groupId : groupIdList) {
+            groupInfoList.add(getGroupInfoById(groupId));
         }
 
         String sendMessageBody = JSON.toJSONString(groupInfoList);
@@ -103,7 +92,7 @@ public class GroupService {
         List<UserInfoServerEntity> memberInfoList = new ArrayList<>();
 
         int groupId = singleIntEntity.getUserId();
-        List<Integer> memberIdList = serviceDao.queryGroupMemberById(groupId);
+        List<Integer> memberIdList = serviceDao.queryGroupMemberList(groupId);
         for (int memberId : memberIdList){
             UserInfoServerEntity memberInfo = getUserInfoById(memberId);
             memberInfoList.add(memberInfo);
@@ -150,6 +139,26 @@ public class GroupService {
             }
         }
         return userInfoServerEntity;
+    }
+
+    private GroupInfoServerEntity getGroupInfoById(int groupId) {
+        GroupInfoServerEntity groupInfo = new GroupInfoServerEntity();
+        String groupInfoString = serviceDao.queryGroupInfoById(groupId);
+
+        String[] queryDataArray = groupInfoString.split("#",-1);
+        if (queryDataArray.length == 4){
+            groupInfo.setGroupId(groupId);
+            groupInfo.setGroupName(queryDataArray[0]);
+            groupInfo.setCreatorId( Integer.parseInt(queryDataArray[1]));
+            groupInfo.setManagerId(Integer.parseInt(queryDataArray[2]));
+            groupInfo.setCreateTime(queryDataArray[3]);
+        }
+        else {
+            logger.error(String.format("无法解析数据层数据:%s,解析后实际length为:%d，设定为4",
+                    groupInfoString,queryDataArray.length));
+        }
+
+        return groupInfo;
     }
 
 }
