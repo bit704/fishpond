@@ -124,7 +124,12 @@ public class DAOTest extends FishpondApplicationTests {
 
     @Test
     public void testTrival() throws DAOException {
-        System.out.println(iServiceDao.checkPassword(10000031,"1"));
+        //System.out.println(iServiceDao.recordNewUser("1","1","1","1"));
+
+        LocalDateTime now = LocalDateTime.now();
+        System.out.println(now.toString());
+        //LocalDateTime localDateTime = LocalDateTime.parse("2021-01-01 00:00:00");
+
     }
 
 }

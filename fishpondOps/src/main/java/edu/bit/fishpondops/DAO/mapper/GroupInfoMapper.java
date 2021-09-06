@@ -18,11 +18,19 @@ public interface GroupInfoMapper {
             + tableName)
     public List<GroupInfoDO> selectAll();
 
+    @Select("select * from  "
+            + tableName
+            + " where gid = #{gid}")
+    public GroupInfoDO selectOneById(@Param("gid") int gid);
+
+    @Select("select count(*) from "
+            + tableName)
+    public int selectCount();
+
     @Select("Select * from "
             + tableName
-            + " where ${columnName} = ${columnValue}")
-    public GroupInfoDO selectBatch(@Param("columnName") String columnName,
-                                   @Param("columnValue") String columnValue);
+            + " limit #{num}")
+    public List<GroupInfoDO> selectBatch(@Param("num") int num);
 
     @Insert("insert into "
             + tableName
@@ -63,6 +71,7 @@ public interface GroupInfoMapper {
 
     /**
      * 获取下一个序列号
+     *
      * @return 下一个序列号
      */
     @Select("select last_value from fishpond.groupinfo_uid_seq")

@@ -18,6 +18,17 @@ public interface GroupMemberMapper {
             + tableName)
     public List<GroupMemberDO> selectAll();
 
+    @Select("select count(distinct(gid)) from  "
+            + tableName
+            + " where memberID = #{uid}")
+    public int selectGroupNumByUid(@Param("uid") int uid);
+
+
+    @Select("select count(*) from "
+            + tableName
+            + " where gid = #{gid}")
+    public int selectUserNumByGid(@Param("gid") int gid);
+
     @Select("Select * from "
             + tableName
             + " where ${columnName} = ${columnValue}")
