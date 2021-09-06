@@ -3,6 +3,8 @@ gsql -d fishpond -p 26000
 
 gsql -d fishpond -U mhn -p 26000  -W fpDbMhn# -r
 
+drop schema fishpond cascade;
+create schema fishpond;
 */
 
 create table fishpond.user(
@@ -36,7 +38,7 @@ manager INTEGER references fishpond.user(uid),
 real BOOLEAN Not Null
 );
 
-select setval('fishpond.groupinfo_uid_seq',10000000,true);
+select setval('fishpond.groupinfo_uid_seq',20000000,true);
 
 create table fishpond.friendship(
 uid1 INTEGER references fishpond.user(uid),
@@ -55,6 +57,7 @@ primary key(requester, receiver)
 );
 
 create table fishpond.message(
+mid SERIAL primary key,
 sender INTEGER references fishpond.user(uid),
 receiver INTEGER references fishpond.user(uid),
 send_time DATE NOT NULL,
@@ -63,6 +66,7 @@ content TEXT NOT NULL
 );
 
 create table fishpond.groupmessage(
+gmid SERIAL primary key,
 sender INTEGER references fishpond.user(uid),
 receiver INTEGER references fishpond.groupinfo(gid),
 send_time DATE NOT NULL,
@@ -74,11 +78,12 @@ create table fishpond.groupmember(
 gid INTEGER references fishpond.groupinfo(gid),
 memberID INTEGER references fishpond.user(uid),
 invitorID INTEGER references fishpond.user(uid),
-intime DATE Not Null,
+join_time DATE Not Null,
 primary key(gid,memberID)
 );
 
 create table fishpond.sysmessage(
+smid SERIAL primary key,
 uid INTEGER references fishpond.user(uid),
 send_time DATE NOT NULL,
 mtype CHAR(1),

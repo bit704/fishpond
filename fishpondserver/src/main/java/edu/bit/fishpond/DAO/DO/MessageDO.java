@@ -3,6 +3,11 @@ package edu.bit.fishpond.DAO.DO;
 public class MessageDO {
 
     /**
+     * 唯一标识
+     */
+    private int mid;
+
+    /**
      * 申请者编号
      */
     private int sender;

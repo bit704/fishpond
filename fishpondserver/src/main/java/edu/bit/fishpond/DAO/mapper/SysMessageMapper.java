@@ -33,11 +33,6 @@ public interface SysMessageMapper {
                          @Param("mtype") String mtype,
                          @Param("content") String content);
 
-    @Delete("delete from "
-            + tableName
-            + " where ${columnName} = ${columnValue}")
-    public int deleteBatch(@Param("columnName") String columnName,
-                           @Param("columnValue") String columnValue);
 
     @Update("truncate table "
             + tableName)
