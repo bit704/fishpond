@@ -22,7 +22,7 @@ public class ConnectService {
 
     public boolean login(LoginClientEntity loginClientEntity) throws DAOException {
         int loginId = loginClientEntity.getLoginUserId();
-        if (!iServiceDao.queryUserIdExist(loginId)){
+        if (!iServiceDao.checkUserIdExist(loginId)){
             logger.warn("用户不存在：" + loginId);
             return false;
         }
@@ -36,7 +36,7 @@ public class ConnectService {
                 return false;
             }
             else {
-                iServiceDao.updateOnlineStatusById(loginId);
+                iServiceDao.updateOnlineStatus(loginId);
                 logger.info("登录后," + loginId + "的在线状态为" + iServiceDao.queryOnlineStatusById(loginId));
             }
 
@@ -47,7 +47,7 @@ public class ConnectService {
 
     public void offLine(SingleIntEntity singleIntEntity) throws DAOException {
         int offLineId = singleIntEntity.getUserId();
-        iServiceDao.updateOnlineStatusById(offLineId);
+        iServiceDao.updateOnlineStatus(offLineId);
     }
 
 
