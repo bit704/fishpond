@@ -30,6 +30,7 @@ public class FishpondOpsShell {
             return queryService.getUsers(num);
         } else {
             return queryService.getSpecifiedUser(uid);
+
         }
     }
 
@@ -56,6 +57,7 @@ public class FishpondOpsShell {
         return queryService.getDb();
     }
 
+
     @ShellMethod("查看系统负载")
     public String checkLoad() {
         queryService.getLoad();
@@ -71,6 +73,6 @@ public class FishpondOpsShell {
         clientService.reset();
         return  "执行完毕";
     }
-    //pressure-test --num 100
+
 
 }

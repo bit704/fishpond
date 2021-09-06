@@ -9,6 +9,7 @@ import edu.bit.fishpondops.utils.entity.RegisterClientEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+
 import javax.websocket.ContainerProvider;
 import javax.websocket.WebSocketContainer;
 import java.io.IOException;
@@ -57,6 +58,7 @@ public class ClientService {
         }
     }
 
+
     public void activeClient() {
         for (FakeClient fakeClient : fakeClientList) {
             registerAndLogin(fakeClient);
@@ -74,6 +76,7 @@ public class ClientService {
         registerClientEntity.setSecurityQuestion("666");
         registerClientEntity.setAnswer("666");
         fakeClient.send("Register|" + JSON.toJSONString(registerClientEntity));
+
 
         try {
             Thread.sleep(1000);
