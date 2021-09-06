@@ -125,6 +125,7 @@ public class IServiceDaoImpl implements IServiceDao {
                 false,
                 now.toString(),
                 "2000-01-01 00:00:00",
+
                 true);
         if (insertNum2 != 1) {
             throw new DAOException("注册新用户失败");
