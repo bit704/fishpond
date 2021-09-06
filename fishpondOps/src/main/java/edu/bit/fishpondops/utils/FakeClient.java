@@ -24,12 +24,13 @@ public class FakeClient {
 
     @OnClose
     public void onClose(){
+        //System.out.println("已关闭"+uid);
         logger.info("Websocket closed");
     }
 
     @OnMessage
     public void onMessage(String message){
-        System.out.println("收到的消息: " + message);
+        //System.out.println("收到的消息: " + message);
         String[] strings = message.split("\\|");
         switch (strings[0]) {
             case "RegisterResult":
