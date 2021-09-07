@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,12 +31,14 @@ public class MessageService {
 
         int senderId = messageEntity.getSenderId();
         int recipientId = messageEntity.getRecipientId();
-        String sendTime = messageEntity.getSendTime();
+        LocalDateTime currentTime = LocalDateTime.now();
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String currentTimeString = currentTime.format(dateTimeFormatter);
         String messageType = messageEntity.getMessageType();
         String messageContent = messageEntity.getMessageContent();
 
         //将消息写入
-        int id = iServiceDao.recordNewMessage(senderId, recipientId, messageType, sendTime, messageContent);
+        int id = iServiceDao.recordNewMessage(senderId, recipientId, messageType, currentTimeString, messageContent);
         messageEntity.setMessageId(id);
         String sendMessageBody = JSON.toJSONString(messageEntity);
 
@@ -70,7 +74,7 @@ public class MessageService {
         return serverMessageList;
     }
 
-    public List<ServerMessage> getUnreadMessage(SingleIntEntity singleIntEntity){
+    public List<ServerMessage> getUnreadMessage(SingleIntEntity singleIntEntity) {
         List<ServerMessage> serverMessageList = new ArrayList<>();
 
         int id = singleIntEntity.getUserId();
