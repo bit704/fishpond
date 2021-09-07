@@ -24,6 +24,12 @@ public interface GroupInfoMapper {
     public GroupInfoDO selectBatch(@Param("columnName") String columnName,
                                    @Param("columnValue") String columnValue);
 
+
+    @Select("select * from "
+            + tableName
+            + " where gid = #{gid}")
+    public GroupInfoDO selectById(@Param("gid") int gid);
+
     @Select("select name from "
             + tableName
             + " where gid = #{gid}")
@@ -48,9 +54,8 @@ public interface GroupInfoMapper {
 
     @Delete("delete from "
             + tableName
-            + " where ${columnName} = ${columnValue}")
-    public int deleteBatch(@Param("columnName") String columnName,
-                           @Param("columnValue") String columnValue);
+            + " where gid = #{gid}")
+    public int deleteByGid(@Param("gid") int gid);
 
     @Update("truncate table "
             + tableName +

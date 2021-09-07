@@ -1,7 +1,10 @@
 package edu.bit.fishpond.DAO.mapper;
 
 import edu.bit.fishpond.DAO.DO.SysMessageDO;
-import org.apache.ibatis.annotations.*;
+import org.apache.ibatis.annotations.Insert;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -17,6 +20,17 @@ public interface SysMessageMapper {
     @Select("select * from  "
             + tableName)
     public List<SysMessageDO> selectAll();
+
+    @Select("select * from  "
+            + tableName
+            + " where smid = #{smid}")
+    public SysMessageDO selectBySmid(@Param("smid") int smid);
+
+    @Select("select smid from "
+            + tableName
+            + " where uid = #{uid} and send_time > #{last_offline}")
+    public List<Integer> selectBeforeTime(@Param("uid") int uid,
+                                          @Param("last_offline") String last_offline);
 
     @Select("Select * from "
             + tableName
@@ -37,4 +51,12 @@ public interface SysMessageMapper {
     @Update("truncate table "
             + tableName)
     public int deleteAll();
+
+    /**
+     * 获取上一个序列号
+     *
+     * @return 上一个序列号
+     */
+    @Select("select last_value from fishpond.sysmessage_smid_seq")
+    public int getLastSqValue();
 }

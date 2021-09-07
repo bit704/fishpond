@@ -1,6 +1,5 @@
 package edu.bit.fishpond.DAO.mapper;
 
-import edu.bit.fishpond.DAO.DO.UserDO;
 import edu.bit.fishpond.DAO.DO.UserInfoDO;
 import org.apache.ibatis.annotations.*;
 import org.springframework.stereotype.Component;
@@ -29,6 +28,10 @@ public interface UserInfoMapper {
             + " where uid = ${uid}")
     public boolean selectState(@Param("uid") int uid);
 
+    @Select("select last_offline from "
+            + tableName
+            + " where uid = #{uid}")
+    public String selectLast_offlineByUid(@Param("uid") int uid);
 
     @Select("Select * from "
             + tableName
