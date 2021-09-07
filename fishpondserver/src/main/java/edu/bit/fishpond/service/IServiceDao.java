@@ -93,7 +93,6 @@ public interface IServiceDao {
     int recordSystemMessage(int userId, String sendTime, String messageType, String content) throws DAOException;
 
     /**
-     * 需求更新！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
      * 删除指定申请者和接收者的好友申请，并同时删除可能出现的申请者、接收者相反的好友申请
      * @param applierId 申请者id
      * @param recipientId 接收者id

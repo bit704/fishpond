@@ -11,4 +11,4 @@ gen
 *.properties
 /HELP.md
 /src/test/java/edu/bit/fishpond/service/
-
+/src/main/java/edu/bit/fishpond/DAO/ServiceDao.java
