@@ -23,12 +23,12 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * verifyPassword  检验明文密码是否与对应密文对应（服务端密码校验）
  *
  * RSA加密算法
- * generateKeyPair 生成RSA密钥对(服务端第一次与客户端建立联系时，服务端保存公钥，客户端保存私钥)
+ * generateKeyPair 生成RSA密钥对(服务端第一次与客户端建立联系时，服务端保存私钥，客户端保存公钥)
  * encryptRSA(客户端，RSA加密)
  * decryptRSA（服务端，RSA解密）
  *
  */
-public class passwordSecure {
+public class PasswordSecure {
 
     /**
      * 判断密码强度函数
