@@ -18,19 +18,24 @@ public interface MessageMapper {
             + tableName)
     public List<MessageDO> selectAll();
 
+    @Select("select * from  "
+            + tableName
+            + " where mid = #{mid}")
+    public MessageDO selectByMid(@Param("mid") int mid);
+
     @Select("select * from "
             + tableName
             + " where receiver = #{receiver} ")
     public List<MessageDO> selectByReceiver(@Param("receiver") int receiver);
 
     // todo: 这个sql需要优化
-    @Select("select * from "
+    @Select("select mid from "
             + tableName
             + " where ((receiver = #{receiver} and sender = #{sender}) or (receiver = #{sender} and sender = #{receiver}))"
             + " and send_time = (select max(send_time) from "
             + tableName
             + " where (receiver = #{receiver} and sender = #{sender}) or (receiver = #{sender} and sender = #{receiver}) )")
-    public MessageDO selectByPartnerLatest(@Param("sender") int sender,@Param("receiver") int receiver);
+    public int selectMidByPartnerLatest(@Param("sender") int sender, @Param("receiver") int receiver);
 
     @Select("select * from "
             + tableName
@@ -40,13 +45,18 @@ public interface MessageMapper {
     @Select("select * from "
             + tableName
             + " where ((receiver = #{receiver} and sender = #{sender}) or (receiver = #{sender} and sender = #{receiver}))")
-    public List<MessageDO> selectByPartner(@Param("sender") int sender,@Param("receiver") int receiver);
+    public List<MessageDO> selectByPartner(@Param("sender") int sender, @Param("receiver") int receiver);
 
-    @Select("select * from "
+    @Select("select mid from "
+            + tableName
+            + " where ((receiver = #{receiver} and sender = #{sender}) or (receiver = #{sender} and sender = #{receiver}))")
+    public List<Integer> selectMidByPartner(@Param("sender") int sender, @Param("receiver") int receiver);
+
+    @Select("select mid from "
             + tableName
             + " where receiver = #{receiver} and send_time >= #{send_time}")
-    public List<MessageDO> selectByReceiverBeforeTime(@Param("receiver") int receiver,
-                                                     @Param("send_time") String send_time);
+    public List<Integer> selectByReceiverBeforeTime(@Param("receiver") int receiver,
+                                                    @Param("send_time") String send_time);
 
     @Insert("insert into "
             + tableName
@@ -58,9 +68,21 @@ public interface MessageMapper {
                          @Param("mtype") String mtype,
                          @Param("content") String content);
 
-
+    @Delete("delete from "
+            + tableName
+            + " where mid = #{mid}")
+    public int deleteByMid(@Param("mid") int mid);
 
     @Update("truncate table "
             + tableName)
     public int deleteAll();
+
+    /**
+     * 获取上一个序列号
+     *
+     * @return 上一个序列号
+     */
+    @Select("select last_value from fishpond.message_mid_seq")
+    public int getLastSqValue();
+
 }

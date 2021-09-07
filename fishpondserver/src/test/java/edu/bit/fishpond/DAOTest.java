@@ -91,10 +91,10 @@ public class DAOTest extends FishpondApplicationTests {
         System.out.println(localDateTime);
         messageMapper.insertOne(10000000,10000001,localDateTime.toString(),"","你好");
         messageMapper.insertOne(10000000,10000001,"2021-09-02 10:57:07","","你也好");
-        List<MessageDO> messageDOList = messageMapper.selectByReceiverBeforeTime(10000000,"2021-09-02 10:57:07");
+        List<Integer> messageDOList = messageMapper.selectByReceiverBeforeTime(10000000,"2021-09-02 10:57:07");
         System.out.println(messageDOList.toString());
         System.out.println(messageMapper.selectAll());
-        System.out.println(messageMapper.selectByPartnerLatest(10000000,10000001));
+        //System.out.println(messageMapper.selectByPartnerLatest(10000000,10000001));
         messageMapper.deleteAll();
     }
 

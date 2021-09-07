@@ -32,6 +32,30 @@ public class GroupMessageDO {
      */
     private String content;
 
+    public int getGmid() {
+        return gmid;
+    }
+
+    public int getSender() {
+        return sender;
+    }
+
+    public int getReceiver() {
+        return receiver;
+    }
+
+    public String getSend_time() {
+        return send_time;
+    }
+
+    public String getMtype() {
+        return mtype;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
     @Override
     public String toString() {
         return "GroupMessageDO{" +

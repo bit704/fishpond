@@ -7,7 +7,6 @@ import edu.bit.fishpond.utils.DAOException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -173,19 +172,10 @@ public class IServiceDaoImpl implements IServiceDao {
         return true;
     }
 
-    @Override
-    public List<String> getUnreadMessage(int recipientId) {
-        UserInfoDO userInfoDO = userInfoMapper.selectOneById(recipientId);
-        //获取用户上次离线时间
-        String time = userInfoDO.getLast_offline();
-        if(time == null) return new ArrayList<>();
-        List<MessageDO> messageDOList = messageMapper.selectByReceiverBeforeTime(recipientId, time);
-        return messages2Strings(messageDOList);
-    }
 
     @Override
-    public List<String> queryAllMessageBetween(int userId1, int userId2) {
-        return messages2Strings(messageMapper.selectByPartner(userId1,userId2));
+    public List<Integer> queryAllMessageBetween(int userId1, int userId2) {
+        return messageMapper.selectMidByPartner(userId1, userId2);
     }
 
 
@@ -211,15 +201,16 @@ public class IServiceDaoImpl implements IServiceDao {
     }
 
     @Override
-    public void recordSystemMessage(int userId, String sendTime, String messageType, String content) throws DAOException {
-        int insertNum = sysMessageMapper.insertOne(userId,sendTime,messageType,content);
-        if(insertNum != 1) throw new DAOException("添加系统消息失败");
-        return;
+    public int recordSystemMessage(int userId, String sendTime, String messageType, String content) throws DAOException {
+        int insertNum = sysMessageMapper.insertOne(userId, sendTime, messageType, content);
+        if (insertNum != 1) throw new DAOException("添加系统消息失败");
+        return sysMessageMapper.getLastSqValue();
     }
 
     @Override
     public void deleteFriendRequest(int applierId, int recipientId) throws DAOException {
-        int deleteNum = friendRequestMapper.deleteByPK(applierId,recipientId);
+        int deleteNum1 = friendRequestMapper.deleteByPK(applierId, recipientId);
+        int deleteNum2 = friendRequestMapper.deleteByPK(recipientId, applierId);
         //if(deleteNum != 1) throw new DAOException("删除好友申请失败");
         return;
     }
@@ -271,28 +262,21 @@ public class IServiceDaoImpl implements IServiceDao {
         return result;
     }
 
-    @Override
-    public void recordMessage(int senderId, int recipientId, String messageType, String sendTime, String messageContent) throws DAOException {
-        int insertNum = messageMapper.insertOne(senderId,recipientId,sendTime,messageType,messageContent);
-        if(insertNum != 1) throw new DAOException("插入失败");
-        return;
-    }
 
     @Override
-    public List<String> queryLatestMessageList(int userId) {
+    public List<Integer> queryLatestMessageList(int userId) {
         List<FriendshipDO> friendshipDOList = friendshipMapper.selectById(userId);
         List<Integer> friendList = new LinkedList<>();
-        for(FriendshipDO friendshipDO : friendshipDOList) {
-            if(friendshipDO.getUid1() == userId) {
+        for (FriendshipDO friendshipDO : friendshipDOList) {
+            if (friendshipDO.getUid1() == userId) {
                 friendList.add(friendshipDO.getUid2());
-            }
-            else {
+            } else {
                 friendList.add(friendshipDO.getUid1());
             }
         }
-        List<String> result = new ArrayList<>();
+        List<Integer> result = new ArrayList<>();
         for(Integer fid : friendList) {
-            result.add(message2String(messageMapper.selectByPartnerLatest(fid,userId)));
+            result.add(messageMapper.selectMidByPartnerLatest(fid, userId));
         }
         return result;
 
@@ -306,12 +290,8 @@ public class IServiceDaoImpl implements IServiceDao {
     }
 
     @Override
-    public List<String> queryGroupList(int userId) {
-        List<Integer> integers = groupMemberMapper.selectGroupByUser(userId);
-        List<String> result = new ArrayList<>();
-        for(Integer gid : integers) {
-            result.add(gid + "#" + groupInfoMapper.selectNameById(gid));
-        }
+    public List<Integer> queryGroupList(int userId) {
+        List<Integer> result = groupMemberMapper.selectGroupByUser(userId);
         return result;
     }
 
@@ -338,7 +318,7 @@ public class IServiceDaoImpl implements IServiceDao {
 
     @Override
     public void deleteMessage(int messageId) {
-
+        messageMapper.deleteByMid(messageId);
     }
 
     @Override
@@ -361,11 +341,109 @@ public class IServiceDaoImpl implements IServiceDao {
 
     @Override
     public int recordNewMessage(int senderId, int recipientId, String messageType, String sendTime, String messageContent) {
-        return 0;
+        messageMapper.insertOne(senderId, recipientId, sendTime, messageType, messageContent);
+        return messageMapper.getLastSqValue();
     }
 
     @Override
     public List<Integer> queryUnreadMessageList(int recipientId) {
-        return null;
+        //查询接收者的上次登录时间
+        String last_offline = userInfoMapper.selectLast_offlineByUid(recipientId);
+        return messageMapper.selectByReceiverBeforeTime(recipientId, last_offline);
+    }
+
+    @Override
+    public String queryMessageInfoById(int messageId) {
+        return message2String(messageMapper.selectByMid(messageId));
+    }
+
+    @Override
+    public boolean checkMessageExist(int checkId) {
+        MessageDO messageDO = messageMapper.selectByMid(checkId);
+        return messageDO != null;
+    }
+
+    @Override
+    public String queryGroupInfoById(int groupId) {
+        GroupInfoDO groupInfoDO = groupInfoMapper.selectById(groupId);
+        StringJoiner stringJoiner = new StringJoiner("#");
+        stringJoiner.add(groupInfoDO.getName());
+        stringJoiner.add(String.valueOf(groupInfoDO.getCreator()));
+        stringJoiner.add(String.valueOf(groupInfoDO.getManager()));
+        stringJoiner.add(String.valueOf(groupInfoDO.getCreate_time()));
+        return stringJoiner.toString();
+    }
+
+    @Override
+    public void deleteGroup(int groupId) {
+        groupInfoMapper.deleteByGid(groupId);
+    }
+
+    @Override
+    public String querySystemMessageInfoById(int systemMessageId) {
+        SysMessageDO sysMessageDO = sysMessageMapper.selectBySmid(systemMessageId);
+        StringJoiner stringJoiner = new StringJoiner("#");
+        stringJoiner.add(String.valueOf(sysMessageDO.getUser()));
+        stringJoiner.add(sysMessageDO.getSend_time());
+        stringJoiner.add(sysMessageDO.getMtype());
+        stringJoiner.add(sysMessageDO.getContent());
+        return stringJoiner.toString();
+    }
+
+    @Override
+    public List<Integer> queryUnreadSystemMessageList(int userId) {
+        String last_offline = userInfoMapper.selectLast_offlineByUid(userId);
+        return sysMessageMapper.selectBeforeTime(userId,last_offline);
+    }
+
+    @Override
+    public List<Integer> queryUnreadGroupMessageList(int userId) {
+        String last_offline = userInfoMapper.selectLast_offlineByUid(userId);
+        return groupMessageMapper.selectBeforeTime(userId,last_offline);
+    }
+
+    @Override
+    public int recordNewGroupMessage(int senderId, int groupId, String messageType, String sendTime, String messageContent) {
+        groupMessageMapper.insertOne(senderId,groupId,sendTime,messageType,messageContent);
+        return groupMessageMapper.getLastSqValue();
+    }
+
+    @Override
+    public String queryGroupMessageInfoById(int messageId) {
+        GroupMessageDO groupMessageDO = groupMessageMapper.selectByGmid(messageId);
+        StringJoiner stringJoiner = new StringJoiner("#");
+        stringJoiner.add(String.valueOf(groupMessageDO.getSender()));
+        stringJoiner.add(String.valueOf(groupMessageDO.getReceiver()));
+        stringJoiner.add(groupMessageDO.getMtype());
+        stringJoiner.add(groupMessageDO.getSend_time());
+        stringJoiner.add(groupMessageDO.getContent());
+        return stringJoiner.toString();
+    }
+
+    @Override
+    public List<Integer> queryLatestGroupMessageList(int userId) {
+        List<Integer> groupList = groupMemberMapper.selectGroupMemberListById(userId);
+        List<Integer> result = new ArrayList<>();
+        for (Integer gid : groupList)
+        {
+            result.add(groupMessageMapper.selectGmidByPartnerLatest(userId,gid));
+        }
+        return result;
+    }
+
+    @Override
+    public void deleteGroupMessage(int groupMessageId) {
+        groupMessageMapper.deleteByGmid(groupMessageId);
+    }
+
+    @Override
+    public boolean checkGroupMessageExist(int checkId) {
+        GroupMessageDO groupMessageDO = groupMessageMapper.selectByGmid(checkId);
+        return groupMessageDO != null;
+    }
+
+    @Override
+    public List<Integer> queryAllMessageIn(int groupId) {
+        return groupMessageMapper.selectAllGmid();
     }
 }

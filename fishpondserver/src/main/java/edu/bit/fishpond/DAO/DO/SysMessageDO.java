@@ -27,6 +27,26 @@ public class SysMessageDO {
      */
     private String content;
 
+    public int getSmid() {
+        return smid;
+    }
+
+    public int getUser() {
+        return user;
+    }
+
+    public String getSend_time() {
+        return send_time;
+    }
+
+    public String getMtype() {
+        return mtype;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
     @Override
     public String toString() {
         return "SysMessageDO{" +

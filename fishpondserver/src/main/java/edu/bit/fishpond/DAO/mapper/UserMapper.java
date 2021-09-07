@@ -71,12 +71,11 @@ public interface UserMapper {
     public int resetSeq(@Param("start") int start);
 
     /**
-     * 获取下一个序列号
+     * 获取上一个序列号
      *
-     * @return 下一个序列号
+     * @return 上一个序列号
      */
     @Select("select last_value from fishpond.user_uid_seq")
-    //@Select("select nextval('fishpond.user_uid_seq')")
     public int getLastSqValue();
 
 }
