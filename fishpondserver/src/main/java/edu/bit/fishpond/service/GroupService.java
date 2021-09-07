@@ -3,6 +3,7 @@ package edu.bit.fishpond.service;
 import com.alibaba.fastjson.JSON;
 import edu.bit.fishpond.service.entity.*;
 import edu.bit.fishpond.utils.DAOException;
+import edu.bit.fishpond.utils.ErrorPackUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -103,18 +104,140 @@ public class GroupService {
         return serverMessageList;
     }
 
-    public List<ServerMessage> sendMessageToGroup(MessageEntity messageEntity) {
+    public List<ServerMessage> sendMessageToGroup(MessageEntity messageEntity) throws DAOException {
         List<ServerMessage> serverMessageList = new ArrayList<>();
 
         int senderId = messageEntity.getSenderId();
-        int recipientGroupId = messageEntity.getRecipientId();
+        int groupId = messageEntity.getRecipientId();
         String messageType = messageEntity.getMessageType();
         String messageContent = messageEntity.getMessageContent();
         String senderTime = messageEntity.getSendTime();
 
-        
+        int messageId = serviceDao.recordNewGroupMessage(senderId, groupId, messageType, senderTime, messageContent);
+        messageEntity.setMessageId(messageId);
+        String sendMessageBody = JSON.toJSONString(messageEntity);
+
+        boolean senderOnlineStatus = serviceDao.queryOnlineStatusById(senderId);
+        // 如果发送者在线
+        if (senderOnlineStatus) {
+            serverMessageList.add(new ServerMessage(0, "MessageId", sendMessageBody));
+        }
+
+        List<Integer> groupMemberList = serviceDao.queryGroupMemberList(groupId);
+        for (int memberId : groupMemberList) {
+            boolean memberOnlineStatus = serviceDao.queryOnlineStatusById(memberId);
+            if (memberOnlineStatus) {
+                serverMessageList.add(new ServerMessage(memberId, "NewGroupMessage", sendMessageBody));
+            }
+        }
 
         return serverMessageList;
+    }
+
+    public List<ServerMessage> getUnreadGroupMessageHandler(SingleIntEntity singleIntEntity) {
+        List<ServerMessage> serverMessageList = new ArrayList<>();
+
+        int userId = singleIntEntity.getUserId();
+        if (!serviceDao.checkUserIdExist(userId)) {
+            logger.warn("用户不存在" + userId);
+            serverMessageList.add(ErrorPackUtil.getCustomError("用户不存在" + userId,0));
+            return serverMessageList;
+        }
+
+        List<Integer> messageIdList = serviceDao.queryUnreadGroupMessageList(userId);
+        List<MessageEntity> unreadGroupMessageList = new ArrayList<>();
+
+        for (int messageId : messageIdList) {
+            unreadGroupMessageList.add(getGroupMessageInfoById(messageId));
+        }
+
+        String sendMessageBody = JSON.toJSONString(unreadGroupMessageList);
+        serverMessageList.add(new ServerMessage(0, "UnreadGroupMessage", sendMessageBody));
+
+        return serverMessageList;
+    }
+
+    public List<ServerMessage> getLatestGroupMessage(SingleIntEntity singleIntEntity) {
+        List<ServerMessage> serverMessageList = new ArrayList<>();
+
+        int userId = singleIntEntity.getUserId();
+        if (!serviceDao.checkUserIdExist(userId)) {
+            logger.warn("用户不存在" + userId);
+            serverMessageList.add(ErrorPackUtil.getCustomError("用户不存在" + userId,0));
+            return serverMessageList;
+        }
+
+        List<Integer> messageIdList = serviceDao.queryLatestGroupMessageList(userId);
+        List<MessageEntity> latestGroupMessageList = new ArrayList<>();
+
+        for (int messageId : messageIdList) {
+            latestGroupMessageList.add(getGroupMessageInfoById(messageId));
+        }
+
+        String sendMessageBody = JSON.toJSONString(latestGroupMessageList);
+        serverMessageList.add(new ServerMessage(0, "LatestGroupMessage", sendMessageBody));
+
+        return serverMessageList;
+    }
+
+    public List<ServerMessage> getGroupMessageIn(SingleIntEntity singleIntEntity) {
+        List<ServerMessage> serverMessageList = new ArrayList<>();
+        int groupId = singleIntEntity.getUserId();
+
+        if (!serviceDao.checkGroupIdExist(groupId)) {
+            logger.warn("群聊不存在:" + groupId);
+            serverMessageList.add(ErrorPackUtil.getCustomError("群聊不存在" + groupId,0));
+            return serverMessageList;
+        }
+
+        List<Integer> messageIdList = serviceDao.queryAllMessageIn(groupId);
+        List<MessageEntity> messageList = new ArrayList<>();
+
+        for (int messageId : messageIdList) {
+            messageList.add(getGroupMessageInfoById(messageId));
+        }
+
+        String sendMessageBody = JSON.toJSONString(messageList);
+        serverMessageList.add(new ServerMessage(0, "MessageInGroup", sendMessageBody));
+
+        return serverMessageList;
+    }
+
+    public List<ServerMessage> deleteGroupMessage() {
+        List<ServerMessage> serverMessageList = new ArrayList<>();
+
+        return serverMessageList;
+    }
+
+    private MessageEntity getGroupMessageInfoById(int messageId) {
+        MessageEntity messageEntity = new MessageEntity();
+        String messageInfoString = serviceDao.queryMessageInfoById(messageId);
+
+        String[] queryDataArray = messageInfoString.split("#",-1);
+        if (queryDataArray.length == 5) {
+            messageEntity.setMessageId(messageId);
+
+            //得到senderId
+            int senderId = Integer.parseInt(queryDataArray[0]);
+            messageEntity.setSenderId(senderId);
+
+            //根据senderId得到senderName
+            UserInfoServerEntity userInfo = getUserInfoById(senderId);
+            messageEntity.setSenderName(userInfo.getUsername());
+
+            //得到groupId
+            int groupId = Integer.parseInt(queryDataArray[1]);
+            messageEntity.setRecipientId(groupId);
+            //根据groupId得到groupName
+            GroupInfoServerEntity groupInfo = getGroupInfoById(groupId);
+            messageEntity.setRecipientName(groupInfo.getGroupName());
+
+            messageEntity.setMessageType(queryDataArray[2]);
+            messageEntity.setSendTime(queryDataArray[3]);
+            messageEntity.setMessageContent(queryDataArray[4]);
+        }
+
+        return messageEntity;
     }
 
     private UserInfoServerEntity getUserInfoById(int id){

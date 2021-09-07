@@ -36,17 +36,16 @@ public class MessageService {
         //将消息写入
         int id = iServiceDao.recordNewMessage(senderId, recipientId, messageType, sendTime, messageContent);
         messageEntity.setMessageId(id);
+        String sendMessageBody = JSON.toJSONString(messageEntity);
 
         boolean RecipientOnlineStatus = iServiceDao.queryOnlineStatusById(recipientId);
         boolean senderOnlineStatus = iServiceDao.queryOnlineStatusById(senderId);
         // 如果发送者在线
         if (senderOnlineStatus) {
-            String sendMessageBody = JSON.toJSONString(messageEntity);
             serverMessageList.add(new ServerMessage(0, "MessageId", sendMessageBody));
         }
         // 如果接收者在线
         if (RecipientOnlineStatus) {
-            String sendMessageBody = JSON.toJSONString(messageEntity);
             serverMessageList.add(new ServerMessage(recipientId, "NewMessage", sendMessageBody));
         }
 
@@ -77,7 +76,7 @@ public class MessageService {
         int id = singleIntEntity.getUserId();
         if (!iServiceDao.checkUserIdExist(id)){
             logger.warn("用户不存在" + id);
-            serverMessageList.add(ErrorPackUtil.setError("用户不存在" + id,0));
+            serverMessageList.add(ErrorPackUtil.getCustomError("用户不存在" + id,0));
             return serverMessageList;
         }
         List<Integer> messageIdList = iServiceDao.queryUnreadMessageList(id);
@@ -97,7 +96,7 @@ public class MessageService {
 
         if (!iServiceDao.checkUserIdExist(id)){
             logger.warn("用户不存在" + id);
-            serverMessageList.add(ErrorPackUtil.setError("用户不存在" + id,0));
+            serverMessageList.add(ErrorPackUtil.getCustomError("用户不存在" + id,0));
             return serverMessageList;
         }
 
@@ -119,7 +118,7 @@ public class MessageService {
         int messageId = messageIdEntity.getUserId();
         if (!iServiceDao.checkMessageExist(messageId)){
             logger.warn("消息不存在" + messageId);
-            serverMessageList.add(ErrorPackUtil.setError("消息不存在" + messageId,0));
+            serverMessageList.add(ErrorPackUtil.getCustomError("消息不存在" + messageId,0));
             return serverMessageList;
         }
         iServiceDao.deleteMessage(messageId);
