@@ -172,9 +172,19 @@ public class WebSocketConnect {
                     serverMessageList = messageService.getLatestMessageHandler(getLatestMessageSingleIntEntity);
                     sendServerMessage(serverMessageList);
                     break;
+                case "GetLatestGroupMessage":
+                    SingleIntEntity getLatestGroupMessageSingleIntEntity = JSONObject.parseObject(body, SingleIntEntity.class);
+                    serverMessageList = groupService.getLatestGroupMessage(getLatestGroupMessageSingleIntEntity);
+                    sendServerMessage(serverMessageList);
+                    break;
                 case "GetUnreadMessage":
                     SingleIntEntity getUnreadMessageSingleIntEntity = JSONObject.parseObject(body, SingleIntEntity.class);
                     serverMessageList = messageService.getUnreadMessage(getUnreadMessageSingleIntEntity);
+                    sendServerMessage(serverMessageList);
+                    break;
+                case "GetUnreadGroupMessage":
+                    SingleIntEntity getUnreadGroupMessageSingleIntEntity = JSONObject.parseObject(body, SingleIntEntity.class);
+                    serverMessageList = groupService.getUnreadGroupMessageHandler(getUnreadGroupMessageSingleIntEntity);
                     sendServerMessage(serverMessageList);
                     break;
                 case "GetUnreadFriendRequest":
@@ -186,6 +196,11 @@ public class WebSocketConnect {
                     PersonMessageClientEntity personMessageClientEntity =
                             JSONObject.parseObject(body,PersonMessageClientEntity.class);
                     serverMessageList = messageService.getAllMessageBetweenHandler(personMessageClientEntity);
+                    sendServerMessage(serverMessageList);
+                    break;
+                case "GetMessageIn":
+                    SingleIntEntity getGroupMessageInSingleIntEntity = JSONObject.parseObject(body, SingleIntEntity.class);
+                    serverMessageList = groupService.getGroupMessageIn(getGroupMessageInSingleIntEntity);
                     sendServerMessage(serverMessageList);
                     break;
                 case "GetGroupList":
@@ -213,6 +228,7 @@ public class WebSocketConnect {
                     GroupCreateClientEntity entity = JSONObject.parseObject(body, GroupCreateClientEntity.class);
                     serverMessageList = groupService.groupCreateHandler(entity);
                     sendServerMessage(serverMessageList);
+                    break;
                 case "GetUserInfo":
                     SingleIntEntity getUserInfoSingleIntEntity = JSON.parseObject(body, SingleIntEntity.class);
                     serverMessageList = userService.getUserInfo(getUserInfoSingleIntEntity);
@@ -222,6 +238,7 @@ public class WebSocketConnect {
                     SingleIntEntity groupIdEntity = JSONObject.parseObject(body, SingleIntEntity.class);
                     serverMessageList = groupService.getGroupMember(groupIdEntity);
                     sendServerMessage(serverMessageList);
+                    break;
                 case "OffLine":
                     SingleIntEntity offLineSingleIntEntity = JSONObject.parseObject(body, SingleIntEntity.class);
                     connectService.offLine(offLineSingleIntEntity);
