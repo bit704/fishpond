@@ -27,7 +27,7 @@ public interface IServiceDao {
      * @param createTime 创建时间
      * @return 系统分配的群聊Id
      */
-    int recordNewGroup(String groupName, int creatorId, String createTime);
+    int recordNewGroup(String groupName, int creatorId, String createTime) throws DAOException;
 
     /**
      * 通过用户Id查询其在线状态

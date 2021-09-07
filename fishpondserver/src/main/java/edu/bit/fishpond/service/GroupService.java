@@ -3,13 +3,14 @@ package edu.bit.fishpond.service;
 import com.alibaba.fastjson.JSON;
 import edu.bit.fishpond.service.entity.*;
 import edu.bit.fishpond.utils.DAOException;
+import edu.bit.fishpond.utils.ErrorPackUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,7 +18,7 @@ import java.util.List;
 public class GroupService {
 
     @Autowired
-    public GroupService(@Qualifier("IServiceDaoImpl") IServiceDao iServiceDao){
+    public GroupService(IServiceDao iServiceDao){
         this.serviceDao = iServiceDao;
     }
 
@@ -37,7 +38,8 @@ public class GroupService {
         }
 
         LocalDateTime currentTime = LocalDateTime.now();
-        String currentTimeString = currentTime.toString();
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String currentTimeString = currentTime.format(dateTimeFormatter);
 
         //获取新建的群聊的ID
         int groupId = serviceDao.recordNewGroup(groupName, creatorId, currentTimeString);
@@ -50,7 +52,10 @@ public class GroupService {
             if (onlineStatus){
                 GroupInfoServerEntity newGroupInfo = new GroupInfoServerEntity();
                 newGroupInfo.setGroupId(groupId);
+                newGroupInfo.setCreatorId(creatorId);
+                newGroupInfo.setCreateTime(currentTimeString);
                 newGroupInfo.setGroupName(groupName);
+                newGroupInfo.setManagerId(creatorId);
 
 
                 String sendMessageBody = JSON.toJSONString(newGroupInfo);
@@ -71,11 +76,13 @@ public class GroupService {
 
         List<GroupInfoServerEntity> groupInfoList = new ArrayList<>();
 
-        int id = entity.getUserId();
-        if (!serviceDao.checkGroupIdExist(id)){
+        int userId = entity.getUserId();
+        if (!serviceDao.checkUserIdExist(userId)){
+            logger.warn("用户不存在" + userId);
+            serverMessageList.add(ErrorPackUtil.getCustomError("用户不存在" + userId,0));
             return serverMessageList;
         }
-        List<Integer> groupIdList = serviceDao.queryGroupList(id);
+        List<Integer> groupIdList = serviceDao.queryGroupList(userId);
 
         for (int groupId : groupIdList) {
             groupInfoList.add(getGroupInfoById(groupId));
@@ -103,25 +110,175 @@ public class GroupService {
         return serverMessageList;
     }
 
-    public List<ServerMessage> sendMessageToGroup(MessageEntity messageEntity) {
+    public List<ServerMessage> sendMessageToGroup(MessageEntity messageEntity) throws DAOException {
         List<ServerMessage> serverMessageList = new ArrayList<>();
 
         int senderId = messageEntity.getSenderId();
-        int recipientGroupId = messageEntity.getRecipientId();
+        int groupId = messageEntity.getRecipientId();
         String messageType = messageEntity.getMessageType();
         String messageContent = messageEntity.getMessageContent();
-        String senderTime = messageEntity.getSendTime();
+        LocalDateTime currentTime = LocalDateTime.now();
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String currentTimeString = currentTime.format(dateTimeFormatter);
 
-        
+        int messageId = serviceDao.recordNewGroupMessage(senderId, groupId, messageType, currentTimeString, messageContent);
+        messageEntity.setMessageId(messageId);
+        String sendMessageBody = JSON.toJSONString(messageEntity);
+
+        boolean senderOnlineStatus = serviceDao.queryOnlineStatusById(senderId);
+        // 如果发送者在线
+        if (senderOnlineStatus) {
+            serverMessageList.add(new ServerMessage(0, "MessageId", sendMessageBody));
+        }
+
+        List<Integer> groupMemberList = serviceDao.queryGroupMemberList(groupId);
+        for (int memberId : groupMemberList) {
+            boolean memberOnlineStatus = serviceDao.queryOnlineStatusById(memberId);
+            if (memberOnlineStatus) {
+                if (memberId != senderId){
+                    serverMessageList.add(new ServerMessage(memberId, "NewGroupMessage", sendMessageBody));
+                }
+            }
+        }
 
         return serverMessageList;
+    }
+
+    public List<ServerMessage> getUnreadGroupMessageHandler(SingleIntEntity singleIntEntity) {
+        List<ServerMessage> serverMessageList = new ArrayList<>();
+
+        int userId = singleIntEntity.getUserId();
+        if (!serviceDao.checkUserIdExist(userId)) {
+            logger.warn("用户不存在:" + userId);
+            serverMessageList.add(ErrorPackUtil.getCustomError("用户不存在:" + userId,0));
+            return serverMessageList;
+        }
+
+        List<Integer> messageIdList = serviceDao.queryUnreadGroupMessageList(userId);
+        List<MessageEntity> unreadGroupMessageList = new ArrayList<>();
+
+        for (int messageId : messageIdList) {
+            unreadGroupMessageList.add(getGroupMessageInfoById(messageId));
+        }
+
+        String sendMessageBody = JSON.toJSONString(unreadGroupMessageList);
+        serverMessageList.add(new ServerMessage(0, "UnreadGroupMessage", sendMessageBody));
+
+        return serverMessageList;
+    }
+
+    public List<ServerMessage> getLatestGroupMessage(SingleIntEntity singleIntEntity) {
+        List<ServerMessage> serverMessageList = new ArrayList<>();
+
+        int userId = singleIntEntity.getUserId();
+        if (!serviceDao.checkUserIdExist(userId)) {
+            logger.warn("用户不存在:" + userId);
+            serverMessageList.add(ErrorPackUtil.getCustomError("用户不存在:" + userId,0));
+            return serverMessageList;
+        }
+
+        List<Integer> messageIdList = serviceDao.queryLatestGroupMessageList(userId);
+        List<MessageEntity> latestGroupMessageList = new ArrayList<>();
+
+        for (int messageId : messageIdList) {
+            latestGroupMessageList.add(getGroupMessageInfoById(messageId));
+        }
+
+        String sendMessageBody = JSON.toJSONString(latestGroupMessageList);
+        serverMessageList.add(new ServerMessage(0, "LatestGroupMessage", sendMessageBody));
+
+        return serverMessageList;
+    }
+
+    public List<ServerMessage> getGroupMessageIn(SingleIntEntity singleIntEntity) {
+        List<ServerMessage> serverMessageList = new ArrayList<>();
+        int groupId = singleIntEntity.getUserId();
+
+        if (!serviceDao.checkGroupIdExist(groupId)) {
+            logger.warn("群聊不存在:" + groupId);
+            serverMessageList.add(ErrorPackUtil.getCustomError("群聊不存在" + groupId,0));
+            return serverMessageList;
+        }
+
+        List<Integer> messageIdList = serviceDao.queryAllMessageIn(groupId);
+        List<MessageEntity> messageList = new ArrayList<>();
+
+        for (int messageId : messageIdList) {
+            messageList.add(getGroupMessageInfoById(messageId));
+        }
+
+        String sendMessageBody = JSON.toJSONString(messageList);
+        serverMessageList.add(new ServerMessage(0, "MessageInGroup", sendMessageBody));
+
+        return serverMessageList;
+    }
+
+    public List<ServerMessage> deleteGroupMessage(SingleIntEntity messageIdEntity) throws DAOException {
+        List<ServerMessage> serverMessageList = new ArrayList<>();
+
+        int messageId = messageIdEntity.getUserId();
+
+        if (!serviceDao.checkMessageExist(messageId)) {
+            logger.warn("消息不存在:" + messageId);
+            serverMessageList.add(ErrorPackUtil.getCustomError("消息不存在" + messageId,0));
+            return serverMessageList;
+        }
+        serviceDao.deleteGroupMessage(messageId);
+
+        int groupId = getGroupMessageInfoById(messageId).getRecipientId();
+        List<Integer> messageIdList = serviceDao.queryGroupMemberList(groupId);
+        for (int memberId : messageIdList) {
+            boolean onlineStatus = serviceDao.queryOnlineStatusById(memberId);
+            if (onlineStatus) {
+                String sendMessageBody = JSON.toJSONString(messageIdEntity);
+                serverMessageList.add(new ServerMessage(memberId, "DeleteMessage", sendMessageBody));
+            }
+        }
+
+
+        return serverMessageList;
+    }
+
+    private MessageEntity getGroupMessageInfoById(int messageId) {
+        MessageEntity messageEntity = new MessageEntity();
+        String messageInfoString = serviceDao.queryGroupMessageInfoById(messageId);
+        logger.info(messageInfoString);
+        String[] queryDataArray = messageInfoString.split("#",-1);
+        if (queryDataArray.length == 5) {
+            messageEntity.setMessageId(messageId);
+
+            //得到senderId
+            int senderId = Integer.parseInt(queryDataArray[0]);
+            messageEntity.setSenderId(senderId);
+
+            //根据senderId得到senderName
+            UserInfoServerEntity userInfo = getUserInfoById(senderId);
+            messageEntity.setSenderName(userInfo.getUsername());
+
+            //得到groupId
+            int groupId = Integer.parseInt(queryDataArray[1]);
+            messageEntity.setRecipientId(groupId);
+            //根据groupId得到groupName
+            GroupInfoServerEntity groupInfo = getGroupInfoById(groupId);
+            messageEntity.setRecipientName(groupInfo.getGroupName());
+
+            messageEntity.setMessageType(queryDataArray[2]);
+            messageEntity.setSendTime(queryDataArray[3]);
+            messageEntity.setMessageContent(queryDataArray[4]);
+        }
+        else {
+            logger.error(String.format("无法解析数据层数据:%s,解析后实际length为:%d，设定为5",
+                    messageInfoString,queryDataArray.length));
+        }
+
+        return messageEntity;
     }
 
     private UserInfoServerEntity getUserInfoById(int id){
         UserInfoServerEntity userInfoServerEntity = new UserInfoServerEntity();
         String queryLine = serviceDao.queryUserInfoById(id);
-        logger.info("queryUserInfoById id:" + id);
-        logger.info("queryUserInfoById result:" + queryLine);
+//        logger.info("queryUserInfoById id:" + id);
+//        logger.info("queryUserInfoById result:" + queryLine);
         if (!queryLine.isEmpty()){
             String[] queryDataArray = queryLine.split("#",-1);
             if (queryDataArray.length == 6){

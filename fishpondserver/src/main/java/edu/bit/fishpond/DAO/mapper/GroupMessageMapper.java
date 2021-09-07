@@ -15,8 +15,9 @@ public interface GroupMessageMapper {
             "(sender,receiver,send_time,mtype,content)";
 
     @Select("select gmid from  "
-            + tableName)
-    public List<Integer> selectAllGmid();
+            + tableName
+            + " where receiver = #{gid}")
+    public List<Integer> selectAllGmid(@Param("gid") int gid);
 
     @Select("select * from  "
             + tableName

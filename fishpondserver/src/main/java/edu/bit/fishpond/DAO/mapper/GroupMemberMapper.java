@@ -12,7 +12,7 @@ public interface GroupMemberMapper {
     public static final String tableName = "fishpond.groupmember";
 
     public static final String sql_insertColumns =
-            "(gid, memberID, invitorID, intime)";
+            "(gid, memberID, invitorID, join_time)";
 
     @Select("select * from  "
             + tableName)
