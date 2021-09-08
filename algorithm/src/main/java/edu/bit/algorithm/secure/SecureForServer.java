@@ -1,7 +1,8 @@
-package edu.bit.algorithm.password;
+package edu.bit.algorithm.secure;
 
 import javafx.util.Pair;
 import org.apache.commons.lang.StringUtils;
+import sun.security.rsa.RSAPublicKeyImpl;
 
 import javax.crypto.*;
 import javax.crypto.spec.PBEKeySpec;
@@ -16,8 +17,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  * 密码安全类
  *
- * testPasswordStrength 测试密码强度
- *
  * PBKDF2加密算法
  * encryptPlaintext 将明文密码加密获得密文（服务端密码落库）
  * verifyPassword  检验明文密码是否与对应密文对应（服务端密码校验）
@@ -28,51 +27,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * decryptRSA（服务端，RSA解密）
  *
  */
-public class PasswordSecure {
-
-    /**
-     * 判断密码强度函数
-     *
-     * @param password 密码明文
-     * @return Pair<Integer, String> <代表密码强度的数字,具体信息>
-     * 0: 不通过，密码由6-16个字符组成，且需包含数字、大写字母、小写字母中的至少两种，不允许出现特殊字符
-     * 1：弱
-     * 2：中
-     * 3：强
-     */
-    public static Pair<Integer, String> testPasswordStrength(String password) {
-        int length = password.length();
-        //密码长度不符合要求
-        if (length < 6 || length > 16) return new Pair<>(0, "密码长度不符合要求,应该由6-16个字符组成");
-        int digit = 0;
-        int lowerCase = 0;
-        int upperCase = 0;
-        for (int i = 0; i < length; i++) {
-            char single = password.charAt(i);
-            if (Character.isDigit(single)) {
-                digit++;
-            } else if (Character.isLowerCase(single)) {
-                lowerCase++;
-            } else if (Character.isUpperCase(single)) {
-                upperCase++;
-            } else {
-                //包含特殊字符
-                return new Pair<>(0, "密码中包含特殊字符");
-            }
-        }
-        //字符类型数量小于要求
-        int typeNum = (digit + length - 1) / length + (lowerCase + length - 1) / length + (upperCase + length - 1) / length;
-        if (typeNum < 2)
-            return new Pair<>(0, "密码需包含数字、大写字母、小写字母中的至少两种");
-
-        if (length < 10 && typeNum == 2)
-            return new Pair<>(1, "密码强度弱");
-        if (length < 13 && typeNum == 2)
-            return new Pair<>(2, "密码强度中");
-        else {
-            return new Pair<>(3, "密码强度强");
-        }
-    }
+public class SecureForServer {
 
     /**
      * 对明文密码加密获得密文密码
@@ -242,6 +197,17 @@ public class PasswordSecure {
             e.printStackTrace();
         }
         return "";
+    }
+
+    /**
+     * 从keypair里拿出public的自定义传输形式
+     * 便于序列化传输
+     * @param keyPair
+     * @return
+     */
+    public static PublicKeyDTO getPublicKeyDTO(KeyPair keyPair) {
+        RSAPublicKeyImpl publicKey = (RSAPublicKeyImpl)keyPair.getPublic();
+        return new PublicKeyDTO(publicKey.getModulus(),publicKey.getPublicExponent());
     }
 
 }
