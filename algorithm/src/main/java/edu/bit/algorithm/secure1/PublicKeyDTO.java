@@ -1,17 +1,17 @@
-package edu.bit.algorithm.secure;
-
-import com.alibaba.fastjson.annotation.JSONField;
+package edu.bit.algorithm.secure1;
 
 import java.math.BigInteger;
 
 public class PublicKeyDTO {
 
-    BigInteger modulus;
+    private BigInteger modulus;
+    private BigInteger PublicExponent;
 
-    BigInteger PublicExponent;
-
-    public PublicKeyDTO(BigInteger modulus, BigInteger publicExponent) {
+    public void setModulus(BigInteger modulus) {
         this.modulus = modulus;
+    }
+
+    public void setPublicExponent(BigInteger publicExponent) {
         PublicExponent = publicExponent;
     }
 
