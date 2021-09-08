@@ -68,7 +68,7 @@ public interface GroupInfoMapper {
      * @param start 起始序号
      * @return 起始序号
      */
-    @Select("select setval('fishpond.groupinfo_uid_seq',#{start},false)")
+    @Select("select setval('fishpond.groupinfo_gid_seq',#{start},false)")
     public int resetSeq(@Param("start") int start);
 
     /**
@@ -76,6 +76,6 @@ public interface GroupInfoMapper {
      *
      * @return 下一个序列号
      */
-    @Select("select last_value from fishpond.groupinfo_uid_seq")
+    @Select("select last_value from fishpond.groupinfo_gid_seq")
     public int getLastSqValue();
 }

@@ -6,7 +6,7 @@ import edu.bit.fishpond.service.entity.ErrorEntity;
 
 public class ErrorPackUtil {
 
-    public static ServerMessage setError(String info, int targetId){
+    public static ServerMessage getCustomError(String info, int targetId){
         ErrorEntity errorEntity = new ErrorEntity();
         errorEntity.setErrorInfo(info);
         String messageBody = JSON.toJSONString(errorEntity);

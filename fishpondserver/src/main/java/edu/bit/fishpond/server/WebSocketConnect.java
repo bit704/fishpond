@@ -7,6 +7,7 @@ import edu.bit.fishpond.service.*;
 import edu.bit.fishpond.service.entity.*;
 import edu.bit.fishpond.utils.DAOException;
 import edu.bit.fishpond.utils.MessageHeadException;
+import edu.bit.fishpond.utils.PasswordSecure;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,8 @@ import javax.websocket.server.ServerEndpoint;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.security.KeyPair;
+import java.security.PrivateKey;
 import java.util.List;
 
 import static javax.websocket.CloseReason.CloseCodes.GOING_AWAY;
@@ -30,6 +33,7 @@ public class WebSocketConnect {
     private int id = 0;
     private String currentFilename;
     private String currentFileExtensionName;
+    //private PrivateKey privateKey;
 
     private static UserService userService;
     private static ConnectService connectService;
@@ -49,6 +53,9 @@ public class WebSocketConnect {
     @OnOpen
     public void onOpen(Session newSession){
         session = newSession;
+        //KeyPair keyPair = PasswordSecure.generateKeyPair();
+        //privateKey = keyPair.getPrivate();
+        //sendMessageDirect("Key", JSON.toJSONString(keyPair.getPublic()));
         logger.info(String.format("与%s建立新的会话", session.getId()));
     }
 
@@ -148,7 +155,6 @@ public class WebSocketConnect {
                     serverMessageList = userService.registerHandler(registerClientEntity);
                     sendServerMessage(serverMessageList);
                     break;
-
                 case "SendFriendRequestTo":
                     FriendRequestClientEntity friendRequestClientEntity =
                             JSONObject.parseObject(body, FriendRequestClientEntity.class);
@@ -172,9 +178,19 @@ public class WebSocketConnect {
                     serverMessageList = messageService.getLatestMessageHandler(getLatestMessageSingleIntEntity);
                     sendServerMessage(serverMessageList);
                     break;
+                case "GetLatestGroupMessage":
+                    SingleIntEntity getLatestGroupMessageSingleIntEntity = JSONObject.parseObject(body, SingleIntEntity.class);
+                    serverMessageList = groupService.getLatestGroupMessage(getLatestGroupMessageSingleIntEntity);
+                    sendServerMessage(serverMessageList);
+                    break;
                 case "GetUnreadMessage":
                     SingleIntEntity getUnreadMessageSingleIntEntity = JSONObject.parseObject(body, SingleIntEntity.class);
                     serverMessageList = messageService.getUnreadMessage(getUnreadMessageSingleIntEntity);
+                    sendServerMessage(serverMessageList);
+                    break;
+                case "GetUnreadGroupMessage":
+                    SingleIntEntity getUnreadGroupMessageSingleIntEntity = JSONObject.parseObject(body, SingleIntEntity.class);
+                    serverMessageList = groupService.getUnreadGroupMessageHandler(getUnreadGroupMessageSingleIntEntity);
                     sendServerMessage(serverMessageList);
                     break;
                 case "GetUnreadFriendRequest":
@@ -188,6 +204,11 @@ public class WebSocketConnect {
                     serverMessageList = messageService.getAllMessageBetweenHandler(personMessageClientEntity);
                     sendServerMessage(serverMessageList);
                     break;
+                case "GetMessageIn":
+                    SingleIntEntity getGroupMessageInSingleIntEntity = JSONObject.parseObject(body, SingleIntEntity.class);
+                    serverMessageList = groupService.getGroupMessageIn(getGroupMessageInSingleIntEntity);
+                    sendServerMessage(serverMessageList);
+                    break;
                 case "GetGroupList":
                     SingleIntEntity groupListSingleIntEntity = JSONObject.parseObject(body, SingleIntEntity.class);
                     serverMessageList = groupService.getGroupListHandler(groupListSingleIntEntity);
@@ -196,6 +217,11 @@ public class WebSocketConnect {
                 case "SendMessageTo":
                     MessageEntity sendMessageEntity = JSONObject.parseObject(body, MessageEntity.class);
                     serverMessageList = messageService.sendMessageHandler(sendMessageEntity);
+                    sendServerMessage(serverMessageList);
+                    break;
+                case "SendGroupMessage":
+                    MessageEntity groupMessageEntity = JSONObject.parseObject(body, MessageEntity.class);
+                    serverMessageList = groupService.sendMessageToGroup(groupMessageEntity);
                     sendServerMessage(serverMessageList);
                     break;
                 case "SendFileTo":
@@ -213,6 +239,7 @@ public class WebSocketConnect {
                     GroupCreateClientEntity entity = JSONObject.parseObject(body, GroupCreateClientEntity.class);
                     serverMessageList = groupService.groupCreateHandler(entity);
                     sendServerMessage(serverMessageList);
+                    break;
                 case "GetUserInfo":
                     SingleIntEntity getUserInfoSingleIntEntity = JSON.parseObject(body, SingleIntEntity.class);
                     serverMessageList = userService.getUserInfo(getUserInfoSingleIntEntity);
@@ -222,6 +249,7 @@ public class WebSocketConnect {
                     SingleIntEntity groupIdEntity = JSONObject.parseObject(body, SingleIntEntity.class);
                     serverMessageList = groupService.getGroupMember(groupIdEntity);
                     sendServerMessage(serverMessageList);
+                    break;
                 case "OffLine":
                     SingleIntEntity offLineSingleIntEntity = JSONObject.parseObject(body, SingleIntEntity.class);
                     connectService.offLine(offLineSingleIntEntity);
@@ -238,7 +266,7 @@ public class WebSocketConnect {
             logger.warn(String.format("无法解析:%s,未知的消息体%s",message,body));
             jsonException.printStackTrace();
         }
-        catch (IOException ioException){
+        catch (IOException ioException) {
             logger.error("ioException");
             ioException.printStackTrace();
         }
@@ -253,7 +281,8 @@ public class WebSocketConnect {
     }
 
     @OnError
-    public void onError(Session session, Throwable error){
+    public void onError(Session session, Throwable error) {
+        error.printStackTrace();
         if (id != 0){
             logger.error(String.format("与%d的会话发生错误",id));
         }

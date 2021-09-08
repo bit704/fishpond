@@ -4,6 +4,7 @@ import edu.bit.fishpond.DAO.DO.*;
 import edu.bit.fishpond.DAO.mapper.*;
 import edu.bit.fishpond.service.IServiceDao;
 import edu.bit.fishpond.utils.DAOException;
+import edu.bit.fishpond.utils.PasswordSecure;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -109,6 +110,7 @@ public class IServiceDaoImpl implements IServiceDao {
 
     @Override
     public int recordNewUser(String userName, String password, String securityQuestion, String answer) throws DAOException {
+        password = PasswordSecure.encryptPlaintext(password);
         int insertNum1 = userMapper.insertOne(password, securityQuestion, answer);
         if (insertNum1 != 1) {
             throw new DAOException("注册新用户失败");
@@ -133,8 +135,10 @@ public class IServiceDaoImpl implements IServiceDao {
     }
 
     @Override
-    public int recordNewGroup(String groupName, int creatorId, String createTime) {
-        return 0;
+    public int recordNewGroup(String groupName, int creatorId, String createTime) throws DAOException {
+        int insertNum = groupInfoMapper.insertOne(groupName,creatorId,createTime,creatorId,true);
+        if(insertNum != 1) throw new DAOException("插入群失败");
+        return groupInfoMapper.getLastSqValue();
     }
 
     @Override
@@ -165,11 +169,10 @@ public class IServiceDaoImpl implements IServiceDao {
     }
 
     @Override
-    public boolean checkPassword(int userId, String passwordHash) {
+    public boolean checkPassword(int userId, String password) {
         UserDO userDO = userMapper.selectOneById(userId);
-        String password = userDO.getPassword();
-        //return password.equals(passwordHash);
-        return true;
+        String passwordHash = userDO.getPassword();
+        return PasswordSecure.verifyPassword(password,passwordHash);
     }
 
 
@@ -444,6 +447,6 @@ public class IServiceDaoImpl implements IServiceDao {
 
     @Override
     public List<Integer> queryAllMessageIn(int groupId) {
-        return groupMessageMapper.selectAllGmid();
+        return groupMessageMapper.selectAllGmid(groupId);
     }
 }

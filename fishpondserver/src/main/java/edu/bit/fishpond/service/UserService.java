@@ -3,13 +3,16 @@ package edu.bit.fishpond.service;
 import com.alibaba.fastjson.JSON;
 import edu.bit.fishpond.service.entity.*;
 import edu.bit.fishpond.utils.DAOException;
+import edu.bit.fishpond.utils.PasswordSecure;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
+import java.security.PrivateKey;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,13 +28,16 @@ public class UserService {
     private final IServiceDao iServiceDao;
     private final Logger logger = LoggerFactory.getLogger(UserService.class);
 
-    public List<ServerMessage> registerHandler(RegisterClientEntity registerClientEntity) throws DAOException {
+    public List<ServerMessage> registerHandler(RegisterClientEntity registerClientEntity)
+            throws DAOException {
         List<ServerMessage> serverMessageList = new ArrayList<>();
 
         String userName = registerClientEntity.getUserName();
         String password = registerClientEntity.getPassword();
         String securityQuestion = registerClientEntity.getSecurityQuestion();
         String answer = registerClientEntity.getAnswer();
+
+        //String passwordDecrypt = PasswordSecure.decryptRSA(password, privateKey);
 
         // 获取新用户的id
         int id = iServiceDao.recordNewUser(userName, password, securityQuestion, answer);
@@ -51,6 +57,8 @@ public class UserService {
         int recipientId = entity.getRecipientId();
         String explain = entity.getExplain();
         LocalDateTime currentTime = LocalDateTime.now();
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String currentTimeString = currentTime.format(dateTimeFormatter);
         boolean onlineStatus = iServiceDao.queryOnlineStatusById(recipientId);
         logger.info("用户:" + recipientId + "的在线状态为" + onlineStatus);
         String sendMessageBody;
@@ -62,14 +70,14 @@ public class UserService {
         }
 
         //添加新的好友申请
-        iServiceDao.recordNewFriendRequest(applierId, recipientId, explain, currentTime.toString());
+        iServiceDao.recordNewFriendRequest(applierId, recipientId, explain, currentTimeString);
 
         //如果接收者在线
         if (onlineStatus){
             //发送
             FriendRequestServerEntity friendRequestServerEntity = new FriendRequestServerEntity();
             friendRequestServerEntity.setApplierId(applierId);
-            friendRequestServerEntity.setSendTime(currentTime.toString());
+            friendRequestServerEntity.setSendTime(currentTimeString);
             friendRequestServerEntity.setExplain(explain);
             UserInfoServerEntity userInfoServerEntity = getUserInfoById(applierId);
             friendRequestServerEntity.setApplierName(userInfoServerEntity.getUsername());
@@ -80,7 +88,7 @@ public class UserService {
         return serverMessageList;
     }
 
-    public List<ServerMessage> getUnreadFriendRequestHandler(SingleIntEntity singleIntEntity){
+    public List<ServerMessage> getUnreadFriendRequestHandler(SingleIntEntity singleIntEntity) {
         List<ServerMessage> serverMessageList = new ArrayList<>();
 
         int loginId = singleIntEntity.getUserId();
@@ -116,7 +124,8 @@ public class UserService {
         return serverMessageList;
     }
 
-    public List<ServerMessage> getFriendRequestFeedbackHandler(FriendRequestFeedbackClientEntity entity) throws DAOException {
+    public List<ServerMessage> getFriendRequestFeedbackHandler(FriendRequestFeedbackClientEntity entity)
+            throws DAOException {
         List<ServerMessage> serverMessageList = new ArrayList<>();
 
         int senderId = entity.getSenderId();
@@ -170,7 +179,7 @@ public class UserService {
         return serverMessageList;
     }
 
-    public String getFriendList(SingleIntEntity singleIntEntity){
+    public String getFriendList(SingleIntEntity singleIntEntity) {
         int id = singleIntEntity.getUserId();
         List<Integer> queryResult = iServiceDao.queryFriendList(id);
         List<UserInfoServerEntity> friendList = new ArrayList<>();
@@ -183,7 +192,7 @@ public class UserService {
         return JSON.toJSONString(friendList);
     }
 
-    public List<ServerMessage> searchUserHandler(SearchUserClientEntity searchUserClientEntity){
+    public List<ServerMessage> searchUserHandler(SearchUserClientEntity searchUserClientEntity) {
         List<ServerMessage> serverMessageList = new ArrayList<>();
 
         List<UserInfoServerEntity> resultList = new ArrayList<>();
@@ -249,7 +258,7 @@ public class UserService {
         return serverMessageList;
     }
 
-    public List<ServerMessage> getUserInfo(SingleIntEntity singleIntEntity){
+    public List<ServerMessage> getUserInfo(SingleIntEntity singleIntEntity) {
         List<ServerMessage> serverMessageList = new ArrayList<>();
 
         int id = singleIntEntity.getUserId();
@@ -283,7 +292,5 @@ public class UserService {
         }
         return userInfoServerEntity;
     }
-
-
 
 }
