@@ -4,7 +4,7 @@ import edu.bit.fishpond.DAO.DO.*;
 import edu.bit.fishpond.DAO.mapper.*;
 import edu.bit.fishpond.service.IServiceDao;
 import edu.bit.fishpond.utils.DAOException;
-import edu.bit.fishpond.utils.PasswordSecure;
+import edu.bit.fishpond.utils.SecureForServer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -110,7 +110,7 @@ public class IServiceDaoImpl implements IServiceDao {
 
     @Override
     public int recordNewUser(String userName, String password, String securityQuestion, String answer) throws DAOException {
-        password = PasswordSecure.encryptPlaintext(password);
+        password = SecureForServer.encryptPlaintext(password);
         int insertNum1 = userMapper.insertOne(password, securityQuestion, answer);
         if (insertNum1 != 1) {
             throw new DAOException("注册新用户失败");
@@ -172,7 +172,7 @@ public class IServiceDaoImpl implements IServiceDao {
     public boolean checkPassword(int userId, String password) {
         UserDO userDO = userMapper.selectOneById(userId);
         String passwordHash = userDO.getPassword();
-        return PasswordSecure.verifyPassword(password,passwordHash);
+        return SecureForServer.verifyPassword(password,passwordHash);
     }
 
 

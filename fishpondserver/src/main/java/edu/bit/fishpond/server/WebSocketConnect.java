@@ -7,7 +7,7 @@ import edu.bit.fishpond.service.*;
 import edu.bit.fishpond.service.entity.*;
 import edu.bit.fishpond.utils.DAOException;
 import edu.bit.fishpond.utils.MessageHeadException;
-import edu.bit.fishpond.utils.PasswordSecure;
+import edu.bit.fishpond.utils.SecureForServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,13 +16,9 @@ import org.springframework.stereotype.Component;
 import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;
 import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.util.List;
-
-import static javax.websocket.CloseReason.CloseCodes.GOING_AWAY;
 
 @ServerEndpoint("/websocket")
 @Component
@@ -31,9 +27,7 @@ public class WebSocketConnect {
 
     private Session session;
     private int id = 0;
-    private String currentFilename;
-    private String currentFileExtensionName;
-    //private PrivateKey privateKey;
+    private PrivateKey privateKey;
 
     private static UserService userService;
     private static ConnectService connectService;
@@ -53,9 +47,9 @@ public class WebSocketConnect {
     @OnOpen
     public void onOpen(Session newSession){
         session = newSession;
-        //KeyPair keyPair = PasswordSecure.generateKeyPair();
-        //privateKey = keyPair.getPrivate();
-        //sendMessageDirect("Key", JSON.toJSONString(keyPair.getPublic()));
+//        KeyPair keyPair = SecureForServer.generateKeyPair();
+//        privateKey = keyPair.getPrivate();
+//        sendMessageDirect("Key", JSON.toJSONString(SecureForServer.getPublicKeyDTO(keyPair)));
         logger.info(String.format("与%s建立新的会话", session.getId()));
     }
 
@@ -77,39 +71,6 @@ public class WebSocketConnect {
             logger.info(String.format("与%s的会话已关闭",session.getId()));
         }
 
-
-
-    }
-
-    @OnMessage
-    public void onBytesMessage(ByteBuffer byteBuffer){
-        logger.info(String.format("客户端:%d发送了文件：%s",id,byteBuffer));
-        byteBuffer.flip();
-        try {
-            String filePathPrefix = "./FileStorage/" + id + "/" + currentFilename;
-            String filePath = filePathPrefix.concat(".").concat(currentFileExtensionName);
-            logger.info(filePath);
-            File file = new File(filePath);
-            int index = 1;
-            // 如果文件已存在，自动重新命名
-            while (!file.exists()){
-                filePathPrefix = filePathPrefix.concat("(" + index + ")");
-                filePath = filePathPrefix.concat(".").concat(currentFileExtensionName);
-                file = new File(filePath);
-                index++;
-            }
-            FileOutputStream outputStream = new FileOutputStream(file, true);
-            FileChannel outChannel = outputStream.getChannel();
-            outChannel.write(byteBuffer);
-
-            outChannel.close();
-            outputStream.close();
-        }
-        catch (IOException ioException){
-            logger.error(String.format("未能写入客户端：%d发来ByteBuffer",
-                    id == 0 ? Integer.parseInt(session.getId()) : id));
-            ioException.printStackTrace();
-        }
     }
 
 
@@ -138,6 +99,7 @@ public class WebSocketConnect {
                     LoginClientEntity loginClientEntity = JSONObject.parseObject(body, LoginClientEntity.class);
 
                     boolean queryResult = connectService.login(loginClientEntity);
+                    //boolean queryResult = connectService.login(loginClientEntity);
                     LoginServerEntity loginServerEntity = new LoginServerEntity();
                     loginServerEntity.setLoginResult(queryResult);
                     sendMessageBody = JSON.toJSONString(loginServerEntity);
@@ -145,7 +107,7 @@ public class WebSocketConnect {
                     if (queryResult){
                         id = loginClientEntity.getLoginUserId();
                         logger.info(String.format("Id：%d成功登录",id));
-                        WebSocketServer.NewConnect(session, id);
+                        WebSocketServer.NewConnect(this, id);
                     }
 
                     sendMessageDirect(sendMessageHead, sendMessageBody);
@@ -153,6 +115,7 @@ public class WebSocketConnect {
                 case "Register":
                     RegisterClientEntity registerClientEntity = JSONObject.parseObject(body, RegisterClientEntity.class);
                     serverMessageList = userService.registerHandler(registerClientEntity);
+                    //serverMessageList = userService.registerHandler(registerClientEntity);
                     sendServerMessage(serverMessageList);
                     break;
                 case "SendFriendRequestTo":
@@ -217,17 +180,15 @@ public class WebSocketConnect {
                 case "SendMessageTo":
                     MessageEntity sendMessageEntity = JSONObject.parseObject(body, MessageEntity.class);
                     serverMessageList = messageService.sendMessageHandler(sendMessageEntity);
+                    if (serverMessageList.size() > 0) {
+                        logger.info(serverMessageList.get(0).getMessage());
+                    }
                     sendServerMessage(serverMessageList);
                     break;
                 case "SendGroupMessage":
                     MessageEntity groupMessageEntity = JSONObject.parseObject(body, MessageEntity.class);
                     serverMessageList = groupService.sendMessageToGroup(groupMessageEntity);
                     sendServerMessage(serverMessageList);
-                    break;
-                case "SendFileTo":
-                    FileEntity fileEntity = JSONObject.parseObject(body, FileEntity.class);
-                    currentFilename = fileEntity.getFileName();
-                    currentFileExtensionName = fileEntity.getExtensionName();
                     break;
                 case "SearchUser":
                     SearchUserClientEntity searchUserClientEntity =
@@ -250,10 +211,15 @@ public class WebSocketConnect {
                     serverMessageList = groupService.getGroupMember(groupIdEntity);
                     sendServerMessage(serverMessageList);
                     break;
-                case "OffLine":
-                    SingleIntEntity offLineSingleIntEntity = JSONObject.parseObject(body, SingleIntEntity.class);
-                    connectService.offLine(offLineSingleIntEntity);
-                    onClose(new CloseReason(GOING_AWAY,"账号在别的位置登录"));
+                case "DeleteMessage":
+                    SingleIntEntity deleteMessageSingleIntEntity = JSON.parseObject(body, SingleIntEntity.class);
+                    serverMessageList = messageService.deleteMessage(deleteMessageSingleIntEntity);
+                    sendServerMessage(serverMessageList);
+                    break;
+                case "DeleteGroupMessage":
+                    SingleIntEntity deleteGroupMessageSingleIntEntity = JSON.parseObject(body, SingleIntEntity.class);
+                    serverMessageList = groupService.deleteGroupMessage(deleteGroupMessageSingleIntEntity);
+                    sendServerMessage(serverMessageList);
                     break;
                 default:
                     throw new MessageHeadException(String.format("无法解析:%s,未知的消息头%s",message,head));
@@ -304,8 +270,16 @@ public class WebSocketConnect {
         });
 
     }
+
+    public void close(CloseReason closeReason) {
+        try {
+            session.close(closeReason);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
     
-    private void sendMessageDirect(String message) {
+    public void sendMessageDirect(String message) {
         session.getAsyncRemote().sendText(message, sendResult -> {
             if (!sendResult.isOK()){
                 logger.error(sendResult.getException().getMessage());
