@@ -15,7 +15,8 @@ public class passwordTest {
 
         KeyPair keyPair = PasswordSecure.generateKeyPair();
         PrivateKey privateKey = keyPair.getPrivate();
-        System.out.println(privateKey.getClass());
+        System.out.println();
+
         System.out.println(PasswordSecure.decryptRSA(PasswordSecure.encryptRSA("555",keyPair.getPublic()),keyPair.getPrivate()));
     }
 }
