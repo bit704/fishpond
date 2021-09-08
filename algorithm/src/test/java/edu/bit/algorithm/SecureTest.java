@@ -6,11 +6,8 @@ import edu.bit.algorithm.secure.SecureForClient;
 import edu.bit.algorithm.secure.SecureForServer;
 import org.junit.jupiter.api.Test;
 
-import java.math.BigInteger;
-import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.PrivateKey;
-import java.security.PublicKey;
 import sun.security.rsa.RSAPublicKeyImpl;
 
 public class SecureTest {
@@ -29,7 +26,7 @@ public class SecureTest {
 
         PublicKeyDTO newpublicKeyDTO = JSON.parseObject(json,PublicKeyDTO.class);
 
-        RSAPublicKeyImpl publicKey = SecureForClient.getPublicKeyDTO(newpublicKeyDTO);
+        RSAPublicKeyImpl publicKey = SecureForClient.getRSAPublicKeyImpl(newpublicKeyDTO);
 
 
         System.out.println(SecureForServer.decryptRSA(SecureForServer.encryptRSA("555",publicKey),privateKey));
