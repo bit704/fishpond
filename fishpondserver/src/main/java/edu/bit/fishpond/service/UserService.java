@@ -3,7 +3,7 @@ package edu.bit.fishpond.service;
 import com.alibaba.fastjson.JSON;
 import edu.bit.fishpond.service.entity.*;
 import edu.bit.fishpond.utils.DAOException;
-import edu.bit.fishpond.utils.PasswordSecure;
+import edu.bit.fishpond.utils.SecureForServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,8 +36,7 @@ public class UserService {
         String password = registerClientEntity.getPassword();
         String securityQuestion = registerClientEntity.getSecurityQuestion();
         String answer = registerClientEntity.getAnswer();
-
-        //String passwordDecrypt = PasswordSecure.decryptRSA(password, privateKey);
+        //String passwordDecrypt = SecureForServer.decryptRSA(password, privateKey);
 
         // 获取新用户的id
         int id = iServiceDao.recordNewUser(userName, password, securityQuestion, answer);

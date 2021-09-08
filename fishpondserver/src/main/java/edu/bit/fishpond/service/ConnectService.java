@@ -3,7 +3,7 @@ package edu.bit.fishpond.service;
 import edu.bit.fishpond.service.entity.LoginClientEntity;
 import edu.bit.fishpond.service.entity.SingleIntEntity;
 import edu.bit.fishpond.utils.DAOException;
-import edu.bit.fishpond.utils.PasswordSecure;
+import edu.bit.fishpond.utils.SecureForServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +30,6 @@ public class ConnectService {
             return false;
         }
         String password = loginClientEntity.getPasswordHash();
-        //String passwordDecrypt = PasswordSecure.decryptRSA(password, privateKey);
         boolean queryResult = iServiceDao.checkPassword(loginId, password);
         if (queryResult){
             boolean queryResult2 = iServiceDao.queryOnlineStatusById(loginId);

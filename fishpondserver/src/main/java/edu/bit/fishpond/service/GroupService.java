@@ -123,20 +123,26 @@ public class GroupService {
 
         int messageId = serviceDao.recordNewGroupMessage(senderId, groupId, messageType, currentTimeString, messageContent);
         messageEntity.setMessageId(messageId);
+        messageEntity.setSendTime(currentTimeString);
         String sendMessageBody = JSON.toJSONString(messageEntity);
 
         boolean senderOnlineStatus = serviceDao.queryOnlineStatusById(senderId);
-        // 如果发送者在线
-        if (senderOnlineStatus) {
-            serverMessageList.add(new ServerMessage(0, "MessageId", sendMessageBody));
-        }
 
         List<Integer> groupMemberList = serviceDao.queryGroupMemberList(groupId);
         for (int memberId : groupMemberList) {
             boolean memberOnlineStatus = serviceDao.queryOnlineStatusById(memberId);
             if (memberOnlineStatus) {
                 if (memberId != senderId){
-                    serverMessageList.add(new ServerMessage(memberId, "NewGroupMessage", sendMessageBody));
+                    serverMessageList.add(
+                            new ServerMessage(memberId, "NewGroupMessage", sendMessageBody));
+                }
+                else {
+                    if (senderOnlineStatus) {
+                        serverMessageList.add(
+                                new ServerMessage(0, "NewGroupMessage", sendMessageBody)
+                        );
+                    }
+
                 }
             }
         }
@@ -218,20 +224,21 @@ public class GroupService {
 
         int messageId = messageIdEntity.getUserId();
 
-        if (!serviceDao.checkMessageExist(messageId)) {
-            logger.warn("消息不存在:" + messageId);
-            serverMessageList.add(ErrorPackUtil.getCustomError("消息不存在" + messageId,0));
+        if (!serviceDao.checkGroupMessageExist(messageId)) {
+            logger.warn("群消息不存在:" + messageId);
+            serverMessageList.add(ErrorPackUtil.getCustomError("群消息不存在" + messageId,0));
             return serverMessageList;
         }
-        serviceDao.deleteGroupMessage(messageId);
 
-        int groupId = getGroupMessageInfoById(messageId).getRecipientId();
+        MessageEntity groupMessageEntity = getGroupMessageInfoById(messageId);
+        int groupId = groupMessageEntity.getRecipientId();
+        serviceDao.deleteGroupMessage(messageId);
         List<Integer> messageIdList = serviceDao.queryGroupMemberList(groupId);
         for (int memberId : messageIdList) {
             boolean onlineStatus = serviceDao.queryOnlineStatusById(memberId);
             if (onlineStatus) {
-                String sendMessageBody = JSON.toJSONString(messageIdEntity);
-                serverMessageList.add(new ServerMessage(memberId, "DeleteMessage", sendMessageBody));
+                String sendMessageBody = JSON.toJSONString(groupMessageEntity);
+                serverMessageList.add(new ServerMessage(memberId, "DeleteGroupMessage", sendMessageBody));
             }
         }
 

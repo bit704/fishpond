@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -40,13 +41,14 @@ public class MessageService {
         //将消息写入
         int id = iServiceDao.recordNewMessage(senderId, recipientId, messageType, currentTimeString, messageContent);
         messageEntity.setMessageId(id);
+        messageEntity.setSendTime(currentTimeString);
         String sendMessageBody = JSON.toJSONString(messageEntity);
 
         boolean RecipientOnlineStatus = iServiceDao.queryOnlineStatusById(recipientId);
         boolean senderOnlineStatus = iServiceDao.queryOnlineStatusById(senderId);
         // 如果发送者在线
         if (senderOnlineStatus) {
-            serverMessageList.add(new ServerMessage(0, "MessageId", sendMessageBody));
+            serverMessageList.add(new ServerMessage(0, "NewMessage", sendMessageBody));
         }
         // 如果接收者在线
         if (RecipientOnlineStatus) {
@@ -125,14 +127,24 @@ public class MessageService {
             serverMessageList.add(ErrorPackUtil.getCustomError("消息不存在" + messageId,0));
             return serverMessageList;
         }
+
+        MessageEntity messageEntity = getMessageInfoById(messageId);
+        int recipientId = messageEntity.getRecipientId();
         iServiceDao.deleteMessage(messageId);
-        int recipientId = getMessageInfoById(messageId).getRecipientId();
+        String sendMessageBody = JSON.toJSONString(messageEntity);
         if (iServiceDao.queryOnlineStatusById(recipientId)) {
-            String sendMessageBody = JSON.toJSONString(messageIdEntity);
             serverMessageList.add(new ServerMessage(recipientId, "DeleteMessage", sendMessageBody));
         }
+        serverMessageList.add(new ServerMessage(0, "DeleteMessage", sendMessageBody));
 
         return serverMessageList;
+    }
+
+    public String getFileName(int messageId) {
+        MessageEntity messageEntity = getMessageInfoById(messageId);
+        String fileName = messageEntity.getMessageContent();
+        String idPath = String.valueOf(messageEntity.getSenderId());
+        return Paths.get(idPath).resolve(fileName).toString();
     }
 
     private MessageEntity getMessageInfoById(int messageId) {
@@ -162,6 +174,10 @@ public class MessageService {
             messageEntity.setMessageType(queryDataArray[2]);
             messageEntity.setSendTime(queryDataArray[3]);
             messageEntity.setMessageContent(queryDataArray[4]);
+        }
+        else {
+            logger.error(String.format("无法解析数据层数据:%s,解析后实际length为:%d，设定为5",
+                    messageInfoString,queryDataArray.length));
         }
 
         return messageEntity;
