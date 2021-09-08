@@ -7,6 +7,9 @@ import edu.bit.fishpond.utils.DAOException;
 import edu.bit.fishpond.utils.PasswordSecure;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -108,6 +111,7 @@ public class IServiceDaoImpl implements IServiceDao {
         return message.toString();
     }
 
+    @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.SERIALIZABLE)
     @Override
     public int recordNewUser(String userName, String password, String securityQuestion, String answer) throws DAOException {
         password = PasswordSecure.encryptPlaintext(password);
@@ -134,6 +138,7 @@ public class IServiceDaoImpl implements IServiceDao {
         return newid;
     }
 
+    @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.SERIALIZABLE)
     @Override
     public int recordNewGroup(String groupName, int creatorId, String createTime) throws DAOException {
         int insertNum = groupInfoMapper.insertOne(groupName,creatorId,createTime,creatorId,true);
@@ -147,6 +152,7 @@ public class IServiceDaoImpl implements IServiceDao {
         return userInfoMapper.selectState(userId);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.REPEATABLE_READ)
     @Override
     public void updateOnlineStatus(int userId) throws DAOException {
         if (!hadUser(userId)) throw new DAOException("没有此用户");
@@ -203,6 +209,7 @@ public class IServiceDaoImpl implements IServiceDao {
         return;
     }
 
+    @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.SERIALIZABLE)
     @Override
     public int recordSystemMessage(int userId, String sendTime, String messageType, String content) throws DAOException {
         int insertNum = sysMessageMapper.insertOne(userId, sendTime, messageType, content);
@@ -210,6 +217,7 @@ public class IServiceDaoImpl implements IServiceDao {
         return sysMessageMapper.getLastSqValue();
     }
 
+    @Transactional(propagation = Propagation.REQUIRED,isolation  = Isolation.READ_COMMITTED)
     @Override
     public void deleteFriendRequest(int applierId, int recipientId) throws DAOException {
         int deleteNum1 = friendRequestMapper.deleteByPK(applierId, recipientId);
@@ -298,6 +306,7 @@ public class IServiceDaoImpl implements IServiceDao {
         return result;
     }
 
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     @Override
     public void deleteUser(int userId) {
         userInfoMapper.deleteOne(userId);
@@ -342,6 +351,7 @@ public class IServiceDaoImpl implements IServiceDao {
         else return true;
     }
 
+    @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.SERIALIZABLE)
     @Override
     public int recordNewMessage(int senderId, int recipientId, String messageType, String sendTime, String messageContent) {
         messageMapper.insertOne(senderId, recipientId, sendTime, messageType, messageContent);
@@ -405,6 +415,7 @@ public class IServiceDaoImpl implements IServiceDao {
         return groupMessageMapper.selectBeforeTime(userId,last_offline);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.SERIALIZABLE)
     @Override
     public int recordNewGroupMessage(int senderId, int groupId, String messageType, String sendTime, String messageContent) {
         groupMessageMapper.insertOne(senderId,groupId,sendTime,messageType,messageContent);
