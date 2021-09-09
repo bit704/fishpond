@@ -1,10 +1,18 @@
-package edu.bit.algorithm.secure2;
+package edu.bit.algorithm.secureplus;
 
+import com.alibaba.fastjson.JSON;
+
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.Date;
 
-public class RSAGeneratorKey {
+/**
+ * RSA加密解密工具
+ */
+public class RSAUtil {
+
 
     /**
      * 生成密钥对
@@ -12,7 +20,7 @@ public class RSAGeneratorKey {
      * @param bitlength 比特长度
      * @return 密钥对
      */
-    public static RsaKeyPair generatorKey(int bitlength) {
+    public static RSAKeyPair generatorKey(int bitlength) {
         SecureRandom random = new SecureRandom();
         random.setSeed(new Date().getTime());
         BigInteger bigPrimep, bigPrimeq;
@@ -32,12 +40,54 @@ public class RSAGeneratorKey {
         //根据扩展欧几里得算法生成b
         BigInteger a = cal(b, k);
         //存储入 公钥与私钥中
-        PrivateKeyp privateKey = new PrivateKeyp(n, a);
-        PublicKeyp publicKey = new PublicKeyp(n, b);
+        RSAPrivateKey privateKey = new RSAPrivateKey(n, a);
+        RSAPublicKey publicKey = new RSAPublicKey(n, b);
 
         //生成秘钥对 返回密钥对
-        return new RsaKeyPair(publicKey, privateKey);
+        return new RSAKeyPair(publicKey, privateKey);
     }
+
+    /**
+     *  加密函数
+     * @param plaintext  明文
+     * @param key 公钥
+     * @param charset 字符集
+     * @return 密文
+     */
+    public static String encrypt(String plaintext, RSAPublicKey key, String charset) {
+        plaintext = "fishpond|" + plaintext;
+        byte[] sourceByte = null;
+        try {
+            sourceByte = plaintext.getBytes(charset);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        BigInteger temp = new BigInteger(1, sourceByte);
+        BigInteger encrypted = temp.modPow(key.getB(), key.getN());
+        return JSON.toJSONString(encrypted);
+    }
+
+    /**
+     * 解密函数
+     * @param ciphertext 密文
+     * @param key 密钥
+     * @param charset 字符集
+     * @return 明文
+     */
+    public static String decrypt(String ciphertext, RSAPrivateKey key, String charset) {
+        BigInteger cryptedBig = JSON.parseObject(ciphertext,BigInteger.class);
+        byte[] cryptedData = cryptedBig.modPow(key.getA(), key.getN()).toByteArray();
+        cryptedData = Arrays.copyOfRange(cryptedData, 0, cryptedData.length);//去除符号位的字节
+        String result = "";
+        try {
+            result = new String(cryptedData, charset);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        if(result.substring(0,9).equals("fishpond|"))  return result.substring(9);
+        return "加密错误或密文被篡改";
+    }
+
 
     //存储临时的位置变量x，y 用于递归
     private static BigInteger x;
@@ -73,5 +123,6 @@ public class RSAGeneratorKey {
 
     }
 
-
 }
+
+

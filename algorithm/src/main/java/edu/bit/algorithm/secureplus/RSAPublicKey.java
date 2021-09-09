@@ -1,14 +1,14 @@
-package edu.bit.algorithm.secure2;
+package edu.bit.algorithm.secureplus;
 
 import java.math.BigInteger;
 
-public class PublicKeyp {
+public class RSAPublicKey {
 
     private final BigInteger n;
 
     private final BigInteger b;
 
-    public PublicKeyp(BigInteger n, BigInteger b){
+    public RSAPublicKey(BigInteger n, BigInteger b){
         this.n=n;
         this.b=b;
     }
