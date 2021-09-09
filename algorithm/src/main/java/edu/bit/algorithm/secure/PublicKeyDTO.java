@@ -1,4 +1,4 @@
-package edu.bit.algorithm.secure1;
+package edu.bit.algorithm.secure;
 
 import java.math.BigInteger;
 

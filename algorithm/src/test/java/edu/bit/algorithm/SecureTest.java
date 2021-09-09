@@ -1,10 +1,10 @@
 package edu.bit.algorithm;
 
 import com.alibaba.fastjson.JSON;
-import edu.bit.algorithm.secure1.PublicKeyDTO;
-import edu.bit.algorithm.secure1.SecureForClient;
-import edu.bit.algorithm.secure1.SecureForServer;
-import edu.bit.algorithm.secure2.*;
+import edu.bit.algorithm.secure.PublicKeyDTO;
+import edu.bit.algorithm.secure.SecureForClient;
+import edu.bit.algorithm.secure.SecureForServer;
+import edu.bit.algorithm.secureplus.*;
 import org.junit.jupiter.api.Test;
 
 import java.security.KeyPair;
@@ -37,10 +37,13 @@ public class SecureTest {
 
     @Test
     public void testSecure2() {
-        RsaKeyPair rsaKeyPair = RSAGeneratorKey.generatorKey(2048);
-        PublicKeyp publicKey = rsaKeyPair.getPublicKey();
-        PrivateKeyp privateKey = rsaKeyPair.getPrivateKey();
-        String ciphertest = SecureForServerp.encryptRSA("徐尘化123456789",publicKey);
-        System.out.println(SecureForClientp.decryptRSA(ciphertest,privateKey));
+        RSAKeyPair rsaKeyPair = RSAUtil.generatorKey(2048);
+        RSAPublicKey publicKey = rsaKeyPair.getPublicKey();
+        RSAPrivateKey privateKey = rsaKeyPair.getPrivateKey();
+        String ciphertext = SecureForClientp.encryptRSA("xuchenhua123456789string",publicKey);
+        System.out.println(SecureForServerp.decryptRSA(ciphertext,privateKey));
+
+        String ciphertext2 = SecureForServerp.encryptPBKDF2("好555");
+        System.out.println(SecureForServerp.verifyPBKDF2("好555",ciphertext2));
     }
 }
