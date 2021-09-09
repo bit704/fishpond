@@ -74,7 +74,7 @@ public class SecureForClientp {
      * @throws Exception
      */
     public static String encryptRSA(String plainText, PublicKeyp publicKeyp) {
-        return RSAUtil.encrypt(plainText,publicKeyp,"UTF-8");
+        return RSAUtil.encrypt(plainText,publicKeyp,"ASCII");
     }
 
     /**
@@ -85,7 +85,7 @@ public class SecureForClientp {
      * @throws Exception
      */
     public static String decryptRSA(String cipherText, PrivateKeyp privateKeyp) {
-        return RSAUtil.decrypt(cipherText,privateKeyp,"UTF-8");
+        return RSAUtil.decrypt(cipherText,privateKeyp,"ASCII");
     }
 
 }

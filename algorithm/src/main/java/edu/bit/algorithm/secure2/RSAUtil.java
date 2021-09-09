@@ -9,12 +9,11 @@ import java.util.Arrays;
 public class RSAUtil {
 
     public static String encrypt(String source, PublicKeyp key, String charset) {
-        source = "密" + source;
+        source = "fishpond|" + source;
         byte[] sourceByte = null;
         try {
             sourceByte = source.getBytes(charset);
         } catch (UnsupportedEncodingException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         BigInteger temp = new BigInteger(1, sourceByte);
@@ -25,14 +24,15 @@ public class RSAUtil {
     public static String decrypt(String ciphertest, PrivateKeyp key, String charset) {
         BigInteger cryptedBig = JSON.parseObject(ciphertest,BigInteger.class);
         byte[] cryptedData = cryptedBig.modPow(key.getA(), key.getN()).toByteArray();
-        cryptedData = Arrays.copyOfRange(cryptedData, 1, cryptedData.length);//去除符号位的字节
+        cryptedData = Arrays.copyOfRange(cryptedData, 0, cryptedData.length);//去除符号位的字节
         String result = "";
         try {
             result = new String(cryptedData, charset);
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
-        if(result.substring(0,1).equals("密"))  return result.substring(1);
+        System.out.println(result);
+        if(result.substring(0,9).equals("fishpond|"))  return result.substring(9);
         return result;
     }
 }

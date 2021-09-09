@@ -40,7 +40,7 @@ public class SecureTest {
         RsaKeyPair rsaKeyPair = RSAGeneratorKey.generatorKey(2048);
         PublicKeyp publicKey = rsaKeyPair.getPublicKey();
         PrivateKeyp privateKey = rsaKeyPair.getPrivateKey();
-        String ciphertest = SecureForServerp.encryptRSA("徐尘化123456789",publicKey);
+        String ciphertest = SecureForServerp.encryptRSA("xuchenhua123456789",publicKey);
         System.out.println(SecureForClientp.decryptRSA(ciphertest,privateKey));
     }
 }
