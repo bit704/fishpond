@@ -1,7 +1,7 @@
-package edu.bit.algorithm.secure2;
+package edu.bit.algorithm.secureplus;
 
 /**
- * 密码安全类
+ * 安全类
  *
  * testPasswordStrength 测试密码强度
  *
@@ -62,30 +62,30 @@ public class SecureForClientp {
      * @return RSA密钥对
      * @throws Exception
      */
-    public static RsaKeyPair generateKeyPair() {
-        return RSAGeneratorKey.generatorKey(2048);
+    public static RSAKeyPair generateKeyPair() {
+        return RSAUtil.generatorKey(2048);
     }
 
     /**
      * RSA加密
      * @param plainText 明文
-     * @param publicKeyp 公钥
+     * @param RSAPublicKey 公钥
      * @return 密文
      * @throws Exception
      */
-    public static String encryptRSA(String plainText, PublicKeyp publicKeyp) {
-        return RSAUtil.encrypt(plainText,publicKeyp,"UTF-8");
+    public static String encryptRSA(String plainText, RSAPublicKey RSAPublicKey) {
+        return RSAUtil.encrypt(plainText, RSAPublicKey,"ASCII");
     }
 
     /**
      * RSA解密
      * @param cipherText 密文
-     * @param privateKeyp 私钥
+     * @param RSAPrivateKey 私钥
      * @return 明文
      * @throws Exception
      */
-    public static String decryptRSA(String cipherText, PrivateKeyp privateKeyp) {
-        return RSAUtil.decrypt(cipherText,privateKeyp,"UTF-8");
+    public static String decryptRSA(String cipherText, RSAPrivateKey RSAPrivateKey) {
+        return RSAUtil.decrypt(cipherText, RSAPrivateKey,"ASCII");
     }
 
 }

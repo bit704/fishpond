@@ -1,40 +1,26 @@
-package edu.bit.algorithm.secure2;
+package edu.bit.algorithm.secureplus;
 
-import edu.bit.algorithm.secure1.PublicKeyDTO;
 import org.apache.commons.lang.StringUtils;
-import sun.security.rsa.RSAPublicKeyImpl;
 
-import javax.crypto.*;
+import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.xml.bind.DatatypeConverter;
-import java.security.*;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
-import java.util.Base64;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
- * 密码安全类
- *
- * PBKDF2加密算法
- * encryptPlaintext 将明文密码加密获得密文（服务端密码落库）
- * verifyPassword  检验明文密码是否与对应密文对应（服务端密码校验）
- *
- * RSA加密算法
- * generateKeyPair 生成RSA密钥对(服务端第一次与客户端建立联系时，服务端保存私钥，客户端保存公钥)
- * encryptRSA(客户端，RSA加密)
- * decryptRSA（服务端，RSA解密）
- *
+ * PBKDF2加密及验证工具
  */
-public class SecureForServerp {
+public class PBKDF2Util {
 
     /**
-     * 对明文密码加密获得密文密码
+     * 对明文加密获得密文
      * PBKDF2加密算法
      *
-     * @param password 密码明文
-     * @return 密码密文
+     * @param password 明文
+     * @return 密文
      */
     public static String encryptPlaintext(String password) {
         password = StringUtils.rightPad(password,16," ");
@@ -60,12 +46,12 @@ public class SecureForServerp {
 
 
     /**
-     * 对输入的密码进行验证,是否符合密文
+     * 对输入的明文进行验证,是否符合密文
      *
-     * @param password 明文密码
-     * @param ciphertext 处理后的密码
+     * @param password 明文
+     * @param ciphertext 密文
      */
-    public static boolean verifyPassword(String password, String ciphertext) {
+    public static boolean verifyPlaintext(String password, String ciphertext) {
         password = StringUtils.rightPad(password,16," ");
         String result = null;
         // 取到盐值
@@ -114,37 +100,6 @@ public class SecureForServerp {
         byte[] hash = secretKeyFactory.generateSecret(spec).getEncoded();
         //将byte数组转换为16进制的字符串
         return DatatypeConverter.printHexBinary(hash);
-    }
-
-    /**
-     * 生成RSA密钥对
-     * @return RSA密钥对
-     * @throws Exception
-     */
-    public static RsaKeyPair generateKeyPair() {
-        return RSAGeneratorKey.generatorKey(2048);
-    }
-
-    /**
-     * RSA加密
-     * @param plainText 明文
-     * @param publicKeyp 公钥
-     * @return 密文
-     * @throws Exception
-     */
-    public static String encryptRSA(String plainText, PublicKeyp publicKeyp) {
-        return RSAUtil.encrypt(plainText,publicKeyp,"UTF-8");
-    }
-
-    /**
-     * RSA解密
-     * @param cipherText 密文
-     * @param privateKeyp 私钥
-     * @return 明文
-     * @throws Exception
-     */
-    public static String decryptRSA(String cipherText, PrivateKeyp privateKeyp) {
-        return RSAUtil.decrypt(cipherText,privateKeyp,"UTF-8");
     }
 
 }

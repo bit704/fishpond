@@ -1,6 +1,7 @@
 package edu.bit.fishpondops;
 
 import edu.bit.fishpondops.service.ClientService;
+import edu.bit.fishpondops.service.DBService;
 import edu.bit.fishpondops.service.MockService;
 import edu.bit.fishpondops.service.QueryService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,14 +65,19 @@ public class FishpondOpsShell {
         return "执行完毕";
     }
 
-    @ShellMethod("执行压力测试")
-    public String pressureTest(@ShellOption(value = {"-N", "-num"}) int num) {
-        System.out.println("创建虚拟客户端数量："+num);
+    @ShellMethod("执行服务器压力测试")
+    public String pressureTest(@ShellOption(value = {"-N", "-num"}, help = "创建虚拟客户端数量") int num) {
         clientService.reset();
         clientService.initFakeClient(num);
         clientService.activeClient();
         clientService.reset();
         return  "执行完毕";
+    }
+
+    @ShellMethod("执行数据库性能测试")
+    public String dbTest(@ShellOption(value = {"-N", "-num"}, help = "最大连接数量") int num) {
+        DBService.testDBConnect(num);
+        return "执行完毕";
     }
 
 
