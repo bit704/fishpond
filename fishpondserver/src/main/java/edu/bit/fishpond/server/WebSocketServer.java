@@ -12,7 +12,7 @@ import static javax.websocket.CloseReason.CloseCodes.GOING_AWAY;
 
 public class WebSocketServer {
 
-    private static final ConcurrentMap<Integer, WebSocketConnect> idSessionMap = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<Integer, WebSocketConnect> idConnectMap = new ConcurrentHashMap<>();
     private static final Logger logger = LoggerFactory.getLogger(WebSocketServer.class);
 
     public static void SendMessageTo(int id, String message){
@@ -22,39 +22,37 @@ public class WebSocketServer {
             return;
         }
 
-//        session.getAsyncRemote().sendText(message, sendResult -> {
-//            if (!sendResult.isOK()){
-//                logger.error(sendResult.getException().getMessage());
-//            }
-//            else {
-//                logger.info(String.format("向客户端:%d发送了消息:%s",id, message));
-//            }
-//        });
         webSocketConnect.sendMessageDirect(message);
 
 
     }
 
+    public static void sendMessageToAll() {
+        for (WebSocketConnect connect : idConnectMap.values()){
+            connect.sendMessageDirect("ping");
+        }
+    }
+
     private static WebSocketConnect GetConnectById(int id){
-        return idSessionMap.getOrDefault(id, null);
+        return idConnectMap.getOrDefault(id, null);
     }
 
     public static void NewConnect(WebSocketConnect webSocketConnect, Integer id) throws IOException {
-        if (idSessionMap.containsKey(id)){
+        if (idConnectMap.containsKey(id)){
             logger.warn(String.format("Id:%d已在线，将导致原有登录下线", id));
-            idSessionMap.get(id).close(new CloseReason(GOING_AWAY,"账号在别的位置登录"));
+            idConnectMap.get(id).close(new CloseReason(GOING_AWAY,"账号在别的位置登录"));
         }
 
-        idSessionMap.put(id, webSocketConnect);
-        if (!idSessionMap.containsKey(id)){
+        idConnectMap.put(id, webSocketConnect);
+        if (!idConnectMap.containsKey(id)){
             logger.error(String.format("Id%d未成功记录", id));
         }
     }
 
     public static void DisConnect(Integer id){
-        if (!idSessionMap.containsKey(id)){
+        if (!idConnectMap.containsKey(id)){
             logger.warn(String.format("Id:%d未登录，不必断开连接",id));
         }
-        idSessionMap.remove(id);
+        idConnectMap.remove(id);
     }
 }

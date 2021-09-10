@@ -35,7 +35,7 @@ public interface MessageMapper {
             + " and send_time = (select max(send_time) from "
             + tableName
             + " where (receiver = #{receiver} and sender = #{sender}) or (receiver = #{sender} and sender = #{receiver}) )")
-    public int selectMidByPartnerLatest(@Param("sender") int sender, @Param("receiver") int receiver);
+    public List<Integer> selectMidByPartnerLatest(@Param("sender") int sender, @Param("receiver") int receiver);
 
     @Select("select * from "
             + tableName

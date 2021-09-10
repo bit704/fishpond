@@ -287,7 +287,7 @@ public class IServiceDaoImpl implements IServiceDao {
         }
         List<Integer> result = new ArrayList<>();
         for(Integer fid : friendList) {
-            result.add(messageMapper.selectMidByPartnerLatest(fid, userId));
+            result.add(messageMapper.selectMidByPartnerLatest(fid, userId).get(0));
         }
         return result;
 
@@ -440,7 +440,7 @@ public class IServiceDaoImpl implements IServiceDao {
         List<Integer> result = new ArrayList<>();
         for (Integer gid : groupList)
         {
-            result.add(groupMessageMapper.selectGmidByPartnerLatest(userId,gid));
+            result.add(groupMessageMapper.selectGmidByPartnerLatest(userId,gid).get(0));
         }
         return result;
     }

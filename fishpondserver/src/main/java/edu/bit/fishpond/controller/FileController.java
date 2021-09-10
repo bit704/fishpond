@@ -100,8 +100,7 @@ public class FileController {
         if(file.exists() && file.canRead())
         {
             System.out.println("download file , filename is "+filename);
-            return ResponseEntity.ok()
-                    .contentType(MediaType.MULTIPART_FORM_DATA)
+            return ResponseEntity.ok().contentType(MediaType.MULTIPART_FORM_DATA)
                     .body(new FileSystemResource(file));
         }
         else
