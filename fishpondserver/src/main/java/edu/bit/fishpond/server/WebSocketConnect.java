@@ -103,14 +103,12 @@ public class WebSocketConnect {
                     LoginServerEntity loginServerEntity = new LoginServerEntity();
                     loginServerEntity.setLoginResult(queryResult);
                     sendMessageBody = JSON.toJSONString(loginServerEntity);
-                    sendMessageHead = "LoginResult";
                     if (queryResult){
                         id = loginClientEntity.getLoginUserId();
                         logger.info(String.format("Id：%d成功登录",id));
                         WebSocketServer.NewConnect(this, id);
                     }
-
-                    sendMessageDirect(sendMessageHead, sendMessageBody);
+                    sendMessageDirect("LoginResult|" + sendMessageBody);
                     break;
                 case "Register":
                     RegisterClientEntity registerClientEntity = JSONObject.parseObject(body, RegisterClientEntity.class);
@@ -133,8 +131,7 @@ public class WebSocketConnect {
                 case "GetFriendList":
                     SingleIntEntity singleIntEntity = JSONObject.parseObject(body, SingleIntEntity.class);
                     sendMessageBody = userService.getFriendList(singleIntEntity);
-                    sendMessageHead = "FriendList";
-                    sendMessageDirect(sendMessageHead, sendMessageBody);
+                    sendMessageDirect("FriendList|" + sendMessageBody);
                     break;
                 case "GetLatestMessage":
                     SingleIntEntity getLatestMessageSingleIntEntity = JSONObject.parseObject(body, SingleIntEntity.class);
@@ -240,8 +237,7 @@ public class WebSocketConnect {
             ErrorEntity errorEntity = new ErrorEntity();
             errorEntity.setErrorInfo("数据库错误");
             sendMessageBody = JSON.toJSONString(errorEntity);
-            sendMessageHead = "Error";
-            sendMessageDirect(sendMessageHead, sendMessageBody);
+            sendMessageDirect("Error|" + sendMessageBody);
             daoException.printStackTrace();
         }
     }
@@ -258,19 +254,6 @@ public class WebSocketConnect {
         error.printStackTrace();
     }
 
-    private void sendMessageDirect(String head, String body) {
-        String message = head + "|" + body;
-        session.getAsyncRemote().sendText(message, sendResult -> {
-            if (!sendResult.isOK()){
-                logger.error(sendResult.getException().getMessage());
-            }
-            else {
-                logger.info(String.format("向客户端:%d发送了消息:%s",id, message));
-            }
-        });
-
-    }
-
     public void close(CloseReason closeReason) {
         try {
             session.close(closeReason);
@@ -280,15 +263,13 @@ public class WebSocketConnect {
     }
     
     public void sendMessageDirect(String message) {
-        session.getAsyncRemote().sendText(message, sendResult -> {
-            if (!sendResult.isOK()){
-                logger.error(sendResult.getException().getMessage());
-            }
-            else {
-                logger.info(String.format("向客户端:%d发送了消息:%s",id, message));
-            }
-        });
-
+        try {
+            session.getBasicRemote().sendText(message);
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+        logger.info(String.format("向客户端:%d发送了消息:%s",id, message));
     }
 
     private void sendServerMessage(List<ServerMessage> serverMessageList){

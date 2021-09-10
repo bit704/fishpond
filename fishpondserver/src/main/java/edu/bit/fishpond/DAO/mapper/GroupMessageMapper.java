@@ -31,7 +31,7 @@ public interface GroupMessageMapper {
             + " and send_time = (select max(send_time) from "
             + tableName
             + " where (receiver = #{receiver} and sender = #{sender}) or (receiver = #{sender} and sender = #{receiver}) )")
-    public int selectGmidByPartnerLatest(@Param("sender") int sender, @Param("receiver") int receiver);
+    public List<Integer> selectGmidByPartnerLatest(@Param("sender") int sender, @Param("receiver") int receiver);
 
 
     @Select("Select * from "
