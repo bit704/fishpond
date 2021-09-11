@@ -346,5 +346,12 @@ public interface IServiceDao {
      */
     boolean checkEncryptedAnswer(int userId, String answer);
 
+    /**
+     * 更新用户安全信息
+     * @param userId 用户id
+     * @param question 新的密保问题
+     * @param answer 新的密保答案
+     */
+    void updateUserSecureInfo(int userId, String password, String question, String answer);
 
 }
