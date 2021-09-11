@@ -94,14 +94,14 @@ public class GroupService {
         return serverMessageList;
     }
 
-    public List<ServerMessage> getGroupMember(SingleIntEntity singleIntEntity) {
+    public List<ServerMessage> getGroupMemberList(SingleIntEntity singleIntEntity) {
         List<ServerMessage> serverMessageList = new ArrayList<>();
-        List<UserInfoServerEntity> memberInfoList = new ArrayList<>();
+        List<UserInfoEntity> memberInfoList = new ArrayList<>();
 
         int groupId = singleIntEntity.getUserId();
         List<Integer> memberIdList = serviceDao.queryGroupMemberList(groupId);
         for (int memberId : memberIdList){
-            UserInfoServerEntity memberInfo = getUserInfoById(memberId);
+            UserInfoEntity memberInfo = getUserInfoById(memberId);
             memberInfoList.add(memberInfo);
         }
         String sendMessageBody = JSON.toJSONString(memberInfoList);
@@ -246,6 +246,108 @@ public class GroupService {
         return serverMessageList;
     }
 
+    public List<ServerMessage> newGroupMember(NewGroupMemberClientEntity newGroupMemberClientEntity) throws DAOException {
+        List<ServerMessage> serverMessageList = new ArrayList<>();
+
+        int newMemberId = newGroupMemberClientEntity.getNewMemberId();
+        int invitorId = newGroupMemberClientEntity.getInvitorId();
+        int groupId = newGroupMemberClientEntity.getGroupId();
+        LocalDateTime currentTime = LocalDateTime.now();
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String currentTimeString = currentTime.format(dateTimeFormatter);
+
+        if (serviceDao.checkGroupMemberExist(newMemberId, groupId)) {
+            logger.warn("该成员已在群中:" + invitorId);
+            serverMessageList.add(ErrorPackUtil.getCustomError("该成员已在群中" + invitorId,0));
+            return serverMessageList;
+        }
+
+        serviceDao.recordNewMember(groupId, newMemberId, invitorId, currentTimeString);
+
+        UserInfoEntity newMemberInfo = getUserInfoById(newMemberId);
+        GroupMemberEntity groupMemberEntity = new GroupMemberEntity();
+        groupMemberEntity.setGroupId(groupId);
+        groupMemberEntity.setUserId(newMemberInfo.getUserId());
+        groupMemberEntity.setUsername(newMemberInfo.getUsername());
+        groupMemberEntity.setSex(newMemberInfo.getSex());
+        groupMemberEntity.setBirthday(newMemberInfo.getBirthday());
+        groupMemberEntity.setRegion(newMemberInfo.getRegion());
+        groupMemberEntity.setRegisterTime(newMemberInfo.getRegisterTime());
+        String sendMessageBody = JSON.toJSONString(groupMemberEntity);
+
+        List<Integer> groupMemberList = serviceDao.queryGroupMemberList(groupId);
+        boolean newMemberOnlineStatus = serviceDao.queryOnlineStatusById(newMemberId);
+        for (int memberId : groupMemberList) {
+            boolean memberOnlineStatus = serviceDao.queryOnlineStatusById(memberId);
+            if (memberOnlineStatus) {
+                if (memberId != newMemberId){
+                    serverMessageList.add(
+                            new ServerMessage(memberId, "NewGroupMember", sendMessageBody));
+                }
+                else {
+                    if (newMemberOnlineStatus) {
+                        serverMessageList.add(
+                                new ServerMessage(0, "NewGroupMember", sendMessageBody)
+                        );
+                    }
+
+                }
+            }
+        }
+
+
+        return serverMessageList;
+    }
+
+    public List<ServerMessage> exitGroupHandler(PersonMessageClientEntity personMessageClientEntity) throws DAOException {
+        List<ServerMessage> serverMessageList = new ArrayList<>();
+
+        int exitMemberId = personMessageClientEntity.getUserId1();
+        int groupId = personMessageClientEntity.getUserId2();
+
+        if (!serviceDao.checkGroupMemberExist(exitMemberId, groupId)) {
+            logger.warn("该成员不在群中:" + exitMemberId);
+            serverMessageList.add(ErrorPackUtil.getCustomError("该成员不在群中" + exitMemberId,0));
+            return serverMessageList;
+        }
+
+        serviceDao.deleteGroupMember(exitMemberId, groupId);
+
+        UserInfoEntity exitMemberInfo = getUserInfoById(exitMemberId);
+        GroupMemberEntity groupMemberEntity = new GroupMemberEntity();
+        groupMemberEntity.setGroupId(groupId);
+        groupMemberEntity.setUserId(exitMemberInfo.getUserId());
+        groupMemberEntity.setUsername(exitMemberInfo.getUsername());
+        groupMemberEntity.setSex(exitMemberInfo.getSex());
+        groupMemberEntity.setBirthday(exitMemberInfo.getBirthday());
+        groupMemberEntity.setRegion(exitMemberInfo.getRegion());
+        groupMemberEntity.setRegisterTime(exitMemberInfo.getRegisterTime());
+        String sendMessageBody = JSON.toJSONString(groupMemberEntity);
+
+        List<Integer> groupMemberList = serviceDao.queryGroupMemberList(groupId);
+        boolean newMemberOnlineStatus = serviceDao.queryOnlineStatusById(exitMemberId);
+        for (int aMemberId : groupMemberList) {
+            boolean memberOnlineStatus = serviceDao.queryOnlineStatusById(aMemberId);
+            if (memberOnlineStatus) {
+                if (aMemberId != exitMemberId){
+                    serverMessageList.add(
+                            new ServerMessage(aMemberId, "GroupMemberExit", sendMessageBody)
+                    );
+                }
+                else {
+                    if (newMemberOnlineStatus) {
+                        serverMessageList.add(
+                                new ServerMessage(0, "GroupMemberExit", sendMessageBody)
+                        );
+                    }
+
+                }
+            }
+        }
+
+        return serverMessageList;
+    }
+
     private MessageEntity getGroupMessageInfoById(int messageId) {
         MessageEntity messageEntity = new MessageEntity();
         String messageInfoString = serviceDao.queryGroupMessageInfoById(messageId);
@@ -259,7 +361,7 @@ public class GroupService {
             messageEntity.setSenderId(senderId);
 
             //根据senderId得到senderName
-            UserInfoServerEntity userInfo = getUserInfoById(senderId);
+            UserInfoEntity userInfo = getUserInfoById(senderId);
             messageEntity.setSenderName(userInfo.getUsername());
 
             //得到groupId
@@ -281,28 +383,28 @@ public class GroupService {
         return messageEntity;
     }
 
-    private UserInfoServerEntity getUserInfoById(int id){
-        UserInfoServerEntity userInfoServerEntity = new UserInfoServerEntity();
+    private UserInfoEntity getUserInfoById(int id){
+        UserInfoEntity userInfoEntity = new UserInfoEntity();
         String queryLine = serviceDao.queryUserInfoById(id);
 //        logger.info("queryUserInfoById id:" + id);
 //        logger.info("queryUserInfoById result:" + queryLine);
         if (!queryLine.isEmpty()){
             String[] queryDataArray = queryLine.split("#",-1);
             if (queryDataArray.length == 6){
-                userInfoServerEntity.setUserId(id);
-                userInfoServerEntity.setUsername(queryDataArray[1]);
-                userInfoServerEntity.setSex(queryDataArray[2]);
-                userInfoServerEntity.setBirthday(queryDataArray[3]);
-                userInfoServerEntity.setRegion(queryDataArray[4]);
-                userInfoServerEntity.setRegisterTime(queryDataArray[5]);
-                userInfoServerEntity.setAvatarUrl("");
+                userInfoEntity.setUserId(id);
+                userInfoEntity.setUsername(queryDataArray[1]);
+                userInfoEntity.setSex(queryDataArray[2]);
+                userInfoEntity.setBirthday(queryDataArray[3]);
+                userInfoEntity.setRegion(queryDataArray[4]);
+                userInfoEntity.setRegisterTime(queryDataArray[5]);
+                userInfoEntity.setAvatarUrl("");
             }
             else {
                 logger.error(String.format("无法解析数据层数据:%s,解析后实际length为:%d，设定为6",
                         queryLine,queryDataArray.length));
             }
         }
-        return userInfoServerEntity;
+        return userInfoEntity;
     }
 
     private GroupInfoServerEntity getGroupInfoById(int groupId) {

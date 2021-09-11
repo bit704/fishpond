@@ -2,7 +2,7 @@ package edu.bit.fishpond.service.entity;
 
 import com.alibaba.fastjson.annotation.JSONField;
 
-public class UserInfoServerEntity {
+public class UserInfoEntity {
 
     @JSONField
     private int userId;

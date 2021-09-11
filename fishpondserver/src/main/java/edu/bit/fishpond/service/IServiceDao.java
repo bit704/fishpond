@@ -93,7 +93,7 @@ public interface IServiceDao {
     int recordSystemMessage(int userId, String sendTime, String messageType, String content) throws DAOException;
 
     /**
-     * 删除指定申请者和接收者的好友申请，并同时删除可能出现的申请者、接收者相反的好友申请
+     * 删除指定申请者和接收者的好友申请(现在不需要：并同时删除可能出现的申请者、接收者相反的好友申请)！！！！！！！！！！！！！！！！
      * @param applierId 申请者id
      * @param recipientId 接收者id
      */
@@ -291,5 +291,45 @@ public interface IServiceDao {
      * @return 该群的所有消息id列表
      */
     List<Integer> queryAllMessageIn(int groupId);
+
+    /**
+     * 查询好友关系是否已经存在（或许需要将两个id交换后再次检查）
+     * @param userId1 用户1id
+     * @param userId2 用户2id
+     * @return 是否存在
+     */
+    boolean checkFriendshipExist(int userId1, int userId2);
+
+    /**
+     * 检查用户是否已经在群聊中存在
+     * @param userId 用户id
+     * @param groupId 群聊id
+     * @return 是否存在
+     */
+    boolean checkGroupMemberExist(int userId, int groupId);
+
+    /**
+     * 更新用户信息
+     * @param userId 要更新的用户的id
+     * @param username （新的）用户名
+     * @param sex （新的）性别
+     * @param birthday （新的）生日
+     * @param region （新的）地区
+     */
+    void updateUserInfo(int userId, String username, String sex, String birthday, String region);
+
+    /**
+     * 删除两个用户间的好友关系（或许需要将两个id交换后再次检查）
+     * @param userId1 用户1id
+     * @param userId2 用户2id
+     */
+    void deleteFriendship(int userId1, int userId2);
+
+    /**
+     * 从该群聊中删除该群成员
+     * @param memberId 要删除的群成员id
+     * @param groupId 群聊id
+     */
+    void deleteGroupMember(int memberId, int groupId);
 
 }
