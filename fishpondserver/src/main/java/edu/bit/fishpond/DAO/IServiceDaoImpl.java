@@ -502,6 +502,6 @@ public class IServiceDaoImpl implements IServiceDao {
 
     @Override
     public void updateUserSecureInfo(int userId, String password, String question, String answer) {
-        userMapper.updateSecureInfo(userId,password,question,answer);
+        userMapper.updateSecureInfo(userId,SecureForServerp.encryptPBKDF2(password),question,answer);
     }
 }
