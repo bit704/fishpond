@@ -71,7 +71,7 @@ public class FishpondOpsShell {
         clientService.initFakeClient(num);
         clientService.activeClient();
         clientService.reset();
-        return  "执行完毕";
+        return  "执行完毕:" + String.valueOf(num) + "虚拟用户下压测成功";
     }
 
     @ShellMethod("执行数据库性能测试")

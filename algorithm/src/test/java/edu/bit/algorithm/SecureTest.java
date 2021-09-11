@@ -46,4 +46,22 @@ public class SecureTest {
         String ciphertext2 = SecureForServerp.encryptPBKDF2("好555");
         System.out.println(SecureForServerp.verifyPBKDF2("好555",ciphertext2));
     }
+
+    @Test
+    public void testPBKDF2Performance() {
+        Long beginTime = System.nanoTime();
+        SecureForServer.encryptPlaintext("1234567890asdbnm");
+        Long endTime = System.nanoTime();
+        System.out.println((endTime-beginTime)/(1e9));
+    }
+
+    @Test
+    public void testRSAPerformance() {
+        RSAKeyPair rsaKeyPair = SecureForServerp.generateKeyPair();
+        RSAPublicKey rsaPublicKey = rsaKeyPair.getPublicKey();
+        Long beginTime = System.nanoTime();
+        SecureForServerp.encryptRSA("1234567890asdbnm",rsaPublicKey);
+        Long endTime = System.nanoTime();
+        System.out.println((endTime-beginTime)/(1e9));
+    }
 }
