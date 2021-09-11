@@ -71,6 +71,19 @@ public interface UserInfoMapper {
                          @Param("columnValue") String columnValue,
                          @Param("uid") int uid);
 
+    @Update("update "
+            + tableName
+            + " set name = ${name} "
+            + " and sex = #{sex} "
+            + " and birthday = #{birthday} "
+            + " and region = #{region} "
+            + " where uid = #{uid}")
+    public int updateInfo(@Param("uid") int uid,
+                         @Param("name") String name,
+                         @Param("sex") String sex,
+                         @Param("birthday") String birthday,
+                         @Param("region") String region);
+
     @Delete("delete from "
             + tableName
             + " where uid = #{uid}")

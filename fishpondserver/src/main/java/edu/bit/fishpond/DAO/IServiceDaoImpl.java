@@ -463,26 +463,40 @@ public class IServiceDaoImpl implements IServiceDao {
 
     @Override
     public boolean checkFriendshipExist(int userId1, int userId2) {
-        return false;
+        int num = friendshipMapper.selectByFriendship(userId1,userId2);
+        return num != 0;
     }
 
     @Override
     public boolean checkGroupMemberExist(int userId, int groupId) {
-        return false;
+        List<Integer> groupList = groupMemberMapper.selectGroupByUser(userId);
+        return groupList.contains(groupId);
     }
 
     @Override
     public void updateUserInfo(int userId, String username, String sex, String birthday, String region) {
-
+        int updateNum = userInfoMapper.updateInfo(userId,username,sex,birthday,region);
     }
 
     @Override
     public void deleteFriendship(int userId1, int userId2) {
-
+        friendshipMapper.deleteByFriendship(userId1,userId2);
     }
 
     @Override
     public void deleteGroupMember(int memberId, int groupId) {
+        groupMemberMapper.deleteGroupMember(memberId,groupId);
+    }
 
+    @Override
+    public String queryEncryptedQuestion(int userId) {
+        UserDO userDO = userMapper.selectOneById(userId);
+        return userDO.getQuestion();
+    }
+
+    @Override
+    public boolean checkEncryptedAnswer(int userId, String answer) {
+        UserDO userDO = userMapper.selectOneById(userId);
+        return userDO.getAnswer().equals(answer);
     }
 }

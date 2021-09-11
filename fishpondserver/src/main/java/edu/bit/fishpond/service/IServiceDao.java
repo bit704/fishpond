@@ -332,4 +332,19 @@ public interface IServiceDao {
      */
     void deleteGroupMember(int memberId, int groupId);
 
+    /**
+     * 查询指定用户的密保问题
+     * @param userId 用户id
+     * @return 密保问题
+     */
+    String queryEncryptedQuestion(int userId);
+
+    /**
+     * 检查指定用户的密保答案是否正确
+     * @param userId 用户id
+     * @return 是否正确
+     */
+    boolean checkEncryptedAnswer(int userId, String answer);
+
+
 }

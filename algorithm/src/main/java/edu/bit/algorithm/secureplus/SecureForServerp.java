@@ -53,7 +53,7 @@ public class SecureForServerp {
      * @throws Exception
      */
     public static RSAKeyPair generateKeyPair() {
-        return RSAUtil.generatorKey(2048);
+        return RSAUtil.generatorKey(1024);
     }
 
     /**

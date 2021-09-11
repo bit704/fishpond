@@ -57,9 +57,9 @@ public class SecureTest {
 
     @Test
     public void testRSAPerformance() {
+        Long beginTime = System.nanoTime();
         RSAKeyPair rsaKeyPair = SecureForServerp.generateKeyPair();
         RSAPublicKey rsaPublicKey = rsaKeyPair.getPublicKey();
-        Long beginTime = System.nanoTime();
         SecureForServerp.encryptRSA("1234567890asdbnm",rsaPublicKey);
         Long endTime = System.nanoTime();
         System.out.println((endTime-beginTime)/(1e9));

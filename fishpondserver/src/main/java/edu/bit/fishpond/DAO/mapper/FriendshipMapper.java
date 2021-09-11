@@ -23,6 +23,12 @@ public interface FriendshipMapper {
             + " where uid1 = #{uid} or uid2 = #{uid}")
     public List<FriendshipDO> selectById(@Param("uid") int uid);
 
+    @Select("select count(*) from "
+            + tableName
+            + " where  (uid1 = #{uid1} and uid2 = #{uid2}) or (uid1 = #{uid2} and uid2 = #{uid1})")
+    public int selectByFriendship(@Param("uid1") int uid1,
+                                  @Param("uid2") int uid2);
+
     @Select("Select * from "
             + tableName
             + " where ${columnName} = ${columnValue}")
@@ -42,6 +48,12 @@ public interface FriendshipMapper {
             + " where ${columnName} = ${columnValue}")
     public int deleteBatch(@Param("columnName") String columnName,
                            @Param("columnValue") String columnValue);
+
+    @Delete("delete from "
+            + tableName
+            + " where  (uid1 = #{uid1} and uid2 = #{uid2}) or (uid1 = #{uid2} and uid2 = #{uid1})")
+    public int deleteByFriendship(@Param("uid1") int uid1,
+                                  @Param("uid2") int uid2);
 
     @Update("truncate table "
             + tableName)

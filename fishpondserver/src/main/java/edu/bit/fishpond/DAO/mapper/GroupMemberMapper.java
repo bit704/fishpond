@@ -49,6 +49,12 @@ public interface GroupMemberMapper {
     public int deleteBatch(@Param("columnName") String columnName,
                            @Param("columnValue") String columnValue);
 
+    @Delete("delete from "
+            + tableName
+            + " where gid = #{gid} and memberID = #{memberID}")
+    public int deleteGroupMember(@Param("memberID") int memberID,
+                                 @Param("gid") int gid);
+
     @Update("truncate table "
             + tableName)
     public int deleteAll();
