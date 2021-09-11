@@ -44,6 +44,17 @@ public interface UserMapper {
                              @Param("columnValue") String columnValue,
                              @Param("uid") int uid);
 
+    @Update("update "
+            + tableName
+            + " set password = #{password} "
+            + " and question = #{question} "
+            + " and answer = #{answer} "
+            + " where uid = #{uid}")
+    public boolean updateSecureInfo(@Param("uid") int uid,
+                             @Param("password") String password,
+                             @Param("question") String question,
+                             @Param("answer") String answer);
+
     @Delete("delete from "
             + tableName
             + " where uid = #{uid}")

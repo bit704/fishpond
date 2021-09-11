@@ -499,4 +499,9 @@ public class IServiceDaoImpl implements IServiceDao {
         UserDO userDO = userMapper.selectOneById(userId);
         return userDO.getAnswer().equals(answer);
     }
+
+    @Override
+    public void updateUserSecureInfo(int userId, String password, String question, String answer) {
+        userMapper.updateSecureInfo(userId,password,question,answer);
+    }
 }
