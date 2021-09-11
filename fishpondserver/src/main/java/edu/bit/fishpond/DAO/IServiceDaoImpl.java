@@ -4,7 +4,7 @@ import edu.bit.fishpond.DAO.DO.*;
 import edu.bit.fishpond.DAO.mapper.*;
 import edu.bit.fishpond.service.IServiceDao;
 import edu.bit.fishpond.utils.DAOException;
-import edu.bit.fishpond.utils.SecureForServer;
+import edu.bit.fishpond.utils.secureplus.SecureForServerp;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
@@ -114,7 +114,7 @@ public class IServiceDaoImpl implements IServiceDao {
     @Transactional(propagation = Propagation.REQUIRED,isolation = Isolation.SERIALIZABLE)
     @Override
     public int recordNewUser(String userName, String password, String securityQuestion, String answer) throws DAOException {
-        password = SecureForServer.encryptPlaintext(password);
+        password = SecureForServerp.encryptPBKDF2(password);
         int insertNum1 = userMapper.insertOne(password, securityQuestion, answer);
         if (insertNum1 != 1) {
             throw new DAOException("注册新用户失败");
@@ -178,7 +178,7 @@ public class IServiceDaoImpl implements IServiceDao {
     public boolean checkPassword(int userId, String password) {
         UserDO userDO = userMapper.selectOneById(userId);
         String passwordHash = userDO.getPassword();
-        return SecureForServer.verifyPassword(password,passwordHash);
+        return SecureForServerp.verifyPBKDF2(password, passwordHash);
     }
 
 
@@ -459,5 +459,30 @@ public class IServiceDaoImpl implements IServiceDao {
     @Override
     public List<Integer> queryAllMessageIn(int groupId) {
         return groupMessageMapper.selectAllGmid(groupId);
+    }
+
+    @Override
+    public boolean checkFriendshipExist(int userId1, int userId2) {
+        return false;
+    }
+
+    @Override
+    public boolean checkGroupMemberExist(int userId, int groupId) {
+        return false;
+    }
+
+    @Override
+    public void updateUserInfo(int userId, String username, String sex, String birthday, String region) {
+
+    }
+
+    @Override
+    public void deleteFriendship(int userId1, int userId2) {
+
+    }
+
+    @Override
+    public void deleteGroupMember(int memberId, int groupId) {
+
     }
 }

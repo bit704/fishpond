@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static javax.websocket.CloseReason.CloseCodes.GOING_AWAY;
+import javax.websocket.CloseReason.CloseCodes;
 
 public class WebSocketServer {
 
@@ -29,7 +29,11 @@ public class WebSocketServer {
 
     public static void sendMessageToAll() {
         for (WebSocketConnect connect : idConnectMap.values()){
+            if (!connect.isAlive) {
+                connect.close(new CloseReason(CloseCodes.NO_STATUS_CODE,"心跳检测失败，服务器主动关闭连接"));
+            }
             connect.sendMessageDirect("ping");
+            connect.isAlive = false;
         }
     }
 
@@ -40,7 +44,7 @@ public class WebSocketServer {
     public static void NewConnect(WebSocketConnect webSocketConnect, Integer id) throws IOException {
         if (idConnectMap.containsKey(id)){
             logger.warn(String.format("Id:%d已在线，将导致原有登录下线", id));
-            idConnectMap.get(id).close(new CloseReason(GOING_AWAY,"账号在别的位置登录"));
+            idConnectMap.get(id).close(new CloseReason(CloseCodes.NO_STATUS_CODE,"账号在别的位置登录"));
         }
 
         idConnectMap.put(id, webSocketConnect);

@@ -159,7 +159,7 @@ public class MessageService {
             int senderId = Integer.parseInt(queryDataArray[0]);
             messageEntity.setSenderId(senderId);
 
-            UserInfoServerEntity userInfo;
+            UserInfoEntity userInfo;
             //根据senderId得到senderName
             userInfo = getUserInfoById(senderId);
             messageEntity.setSenderName(userInfo.getUsername());
@@ -183,28 +183,28 @@ public class MessageService {
         return messageEntity;
     }
 
-    private UserInfoServerEntity getUserInfoById(int id){
-        UserInfoServerEntity userInfoServerEntity = new UserInfoServerEntity();
+    private UserInfoEntity getUserInfoById(int id){
+        UserInfoEntity userInfoEntity = new UserInfoEntity();
         String queryLine = iServiceDao.queryUserInfoById(id);
         logger.info("queryUserInfoById id:" + id);
         logger.info("queryUserInfoById result:" + queryLine);
         if (!queryLine.isEmpty()){
             String[] queryDataArray = queryLine.split("#",-1);
             if (queryDataArray.length == 6){
-                userInfoServerEntity.setUserId(id);
-                userInfoServerEntity.setUsername(queryDataArray[1]);
-                userInfoServerEntity.setSex(queryDataArray[2]);
-                userInfoServerEntity.setBirthday(queryDataArray[3]);
-                userInfoServerEntity.setRegion(queryDataArray[4]);
-                userInfoServerEntity.setRegisterTime(queryDataArray[5]);
-                userInfoServerEntity.setAvatarUrl("");
+                userInfoEntity.setUserId(id);
+                userInfoEntity.setUsername(queryDataArray[1]);
+                userInfoEntity.setSex(queryDataArray[2]);
+                userInfoEntity.setBirthday(queryDataArray[3]);
+                userInfoEntity.setRegion(queryDataArray[4]);
+                userInfoEntity.setRegisterTime(queryDataArray[5]);
+                userInfoEntity.setAvatarUrl("");
             }
             else {
                 logger.error(String.format("无法解析数据层数据:%s,解析后实际length为:%d，设定为6",
                         queryLine,queryDataArray.length));
             }
         }
-        return userInfoServerEntity;
+        return userInfoEntity;
     }
 
 }

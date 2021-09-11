@@ -7,7 +7,7 @@ import edu.bit.fishpond.service.*;
 import edu.bit.fishpond.service.entity.*;
 import edu.bit.fishpond.utils.DAOException;
 import edu.bit.fishpond.utils.MessageHeadException;
-import edu.bit.fishpond.utils.SecureForServer;
+import edu.bit.fishpond.utils.secureplus.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,18 +16,17 @@ import org.springframework.stereotype.Component;
 import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;
 import java.io.*;
-import java.security.KeyPair;
-import java.security.PrivateKey;
 import java.util.List;
 
 @ServerEndpoint("/websocket")
 @Component
 public class WebSocketConnect {
+    boolean isAlive;
     private final Logger logger = LoggerFactory.getLogger(WebSocketConnect.class);
 
     private Session session;
     private int id = 0;
-    private PrivateKey privateKey;
+    private RSAPrivateKey privateKey;
 
     private static UserService userService;
     private static ConnectService connectService;
@@ -47,10 +46,13 @@ public class WebSocketConnect {
     @OnOpen
     public void onOpen(Session newSession){
         session = newSession;
-//        KeyPair keyPair = SecureForServer.generateKeyPair();
-//        privateKey = keyPair.getPrivate();
-//        sendMessageDirect("Key", JSON.toJSONString(SecureForServer.getPublicKeyDTO(keyPair)));
         logger.info(String.format("与%s建立新的会话", session.getId()));
+        isAlive = true;
+        RSAKeyPair keyPair = SecureForServerp.generateKeyPair();
+        privateKey = keyPair.getPrivateKey();
+        sendMessageDirect("Key|" + JSON.toJSONString(keyPair.getPublicKey()));
+
+
     }
 
     @OnClose
@@ -79,7 +81,10 @@ public class WebSocketConnect {
     public void onMessage(String message){
 
         logger.info(String.format("客户端:%d发送了消息：%s",id,message));
-
+        if ("pong".equals(message)) {
+            isAlive = true;
+            return;
+        }
         //解析整条消息，得到消息头和消息体
         String[] messageSplitArray = message.split("\\|",2);
         if (messageSplitArray.length != 2){
@@ -90,7 +95,6 @@ public class WebSocketConnect {
         String head = messageSplitArray[0];
         String body = messageSplitArray[1];
         String sendMessageBody;
-        String sendMessageHead;
         List<ServerMessage> serverMessageList;
         //根据消息头解析消息体
         try {
@@ -98,8 +102,7 @@ public class WebSocketConnect {
                 case "Login":
                     LoginClientEntity loginClientEntity = JSONObject.parseObject(body, LoginClientEntity.class);
 
-                    boolean queryResult = connectService.login(loginClientEntity);
-                    //boolean queryResult = connectService.login(loginClientEntity);
+                    boolean queryResult = connectService.login(loginClientEntity, privateKey);
                     LoginServerEntity loginServerEntity = new LoginServerEntity();
                     loginServerEntity.setLoginResult(queryResult);
                     sendMessageBody = JSON.toJSONString(loginServerEntity);
@@ -112,8 +115,7 @@ public class WebSocketConnect {
                     break;
                 case "Register":
                     RegisterClientEntity registerClientEntity = JSONObject.parseObject(body, RegisterClientEntity.class);
-                    serverMessageList = userService.registerHandler(registerClientEntity);
-                    //serverMessageList = userService.registerHandler(registerClientEntity);
+                    serverMessageList = userService.registerHandler(registerClientEntity, privateKey);
                     sendServerMessage(serverMessageList);
                     break;
                 case "SendFriendRequestTo":
@@ -200,12 +202,12 @@ public class WebSocketConnect {
                     break;
                 case "GetUserInfo":
                     SingleIntEntity getUserInfoSingleIntEntity = JSON.parseObject(body, SingleIntEntity.class);
-                    serverMessageList = userService.getUserInfo(getUserInfoSingleIntEntity);
+                    serverMessageList = userService.getUserInfoHandler(getUserInfoSingleIntEntity);
                     sendServerMessage(serverMessageList);
                     break;
                 case "GetGroupMembers":
                     SingleIntEntity groupIdEntity = JSONObject.parseObject(body, SingleIntEntity.class);
-                    serverMessageList = groupService.getGroupMember(groupIdEntity);
+                    serverMessageList = groupService.getGroupMemberList(groupIdEntity);
                     sendServerMessage(serverMessageList);
                     break;
                 case "DeleteMessage":
@@ -217,6 +219,34 @@ public class WebSocketConnect {
                     SingleIntEntity deleteGroupMessageSingleIntEntity = JSON.parseObject(body, SingleIntEntity.class);
                     serverMessageList = groupService.deleteGroupMessage(deleteGroupMessageSingleIntEntity);
                     sendServerMessage(serverMessageList);
+                    break;
+                case "NewGroupMember":
+                    NewGroupMemberClientEntity newGroupMemberClientEntity =
+                            JSON.parseObject(body, NewGroupMemberClientEntity.class);
+                    serverMessageList = groupService.newGroupMember(newGroupMemberClientEntity);
+                    sendServerMessage(serverMessageList);
+                    break;
+                case "EditUserInfo":
+                    UserInfoEntity userInfoEntity = JSON.parseObject(body, UserInfoEntity.class);
+                    serverMessageList = userService.editUserInfo(userInfoEntity);
+                    sendServerMessage(serverMessageList);
+                    break;
+                case "DeleteFriend":
+                    PersonMessageClientEntity deleteFriendEntity =
+                            JSON.parseObject(body,PersonMessageClientEntity.class);
+                    serverMessageList = userService.deleteFriend(deleteFriendEntity);
+                    sendServerMessage(serverMessageList);
+                    break;
+                case "ExitGroup":
+                    PersonMessageClientEntity exitGroupEntity =
+                            JSON.parseObject(body, PersonMessageClientEntity.class);
+                    serverMessageList = groupService.exitGroupHandler(exitGroupEntity);
+                    sendServerMessage(serverMessageList);
+                    break;
+                case "OffLine":
+                    SingleIntEntity offLineEntity = JSON.parseObject(body, SingleIntEntity.class);
+                    connectService.offLine(offLineEntity);
+                    WebSocketServer.DisConnect(id);
                     break;
                 default:
                     throw new MessageHeadException(String.format("无法解析:%s,未知的消息头%s",message,head));
@@ -244,7 +274,6 @@ public class WebSocketConnect {
 
     @OnError
     public void onError(Session session, Throwable error) {
-        error.printStackTrace();
         if (id != 0){
             logger.error(String.format("与%d的会话发生错误",id));
         }
