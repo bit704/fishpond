@@ -27,11 +27,11 @@ public interface GroupMessageMapper {
     // todo: 这个sql需要优化
     @Select("select gmid from "
             + tableName
-            + " where ((receiver = #{receiver} and sender = #{sender}) or (receiver = #{sender} and sender = #{receiver}))"
+            + " where ( receiver = #{gid} )"
             + " and send_time = (select max(send_time) from "
             + tableName
-            + " where (receiver = #{receiver} and sender = #{sender}) or (receiver = #{sender} and sender = #{receiver}) )")
-    public List<Integer> selectGmidByPartnerLatest(@Param("sender") int sender, @Param("receiver") int receiver);
+            + " where (receiver = #{gid} )" )
+    public List<Integer> selectGmidByPartnerLatest(@Param("gid") int gid);
 
 
     @Select("Select * from "
