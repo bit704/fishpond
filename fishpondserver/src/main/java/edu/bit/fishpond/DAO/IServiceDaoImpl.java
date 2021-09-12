@@ -1,5 +1,7 @@
 package edu.bit.fishpond.DAO;
 
+import com.alicp.jetcache.anno.CacheType;
+import com.alicp.jetcache.anno.Cached;
 import edu.bit.fishpond.DAO.DO.*;
 import edu.bit.fishpond.DAO.mapper.*;
 import edu.bit.fishpond.service.IServiceDao;
@@ -16,6 +18,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.StringJoiner;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class IServiceDaoImpl implements IServiceDao {
@@ -100,6 +103,8 @@ public class IServiceDaoImpl implements IServiceDao {
         return result;
     }
 
+    //将消息转化为字符串的缓存
+    @Cached(cacheType = CacheType.LOCAL, timeUnit = TimeUnit.DAYS, expire = 1)
     private String message2String(MessageDO messageDO) {
         if (messageDO == null) return "";
         StringJoiner message = new StringJoiner("#");
