@@ -436,7 +436,7 @@ public class IServiceDaoImpl implements IServiceDao {
 
     @Override
     public List<Integer> queryLatestGroupMessageList(int userId) {
-        List<Integer> groupList = groupMemberMapper.selectGroupMemberListById(userId);
+        List<Integer> groupList = groupMemberMapper.selectGroupByUser(userId);
         List<Integer> result = new ArrayList<>();
         for (Integer gid : groupList)
         {
@@ -489,7 +489,7 @@ public class IServiceDaoImpl implements IServiceDao {
     }
 
     @Override
-    public String queryEncryptedQuestion(int userId) {
+    public String querySecureQuestion(int userId) {
         UserDO userDO = userMapper.selectOneById(userId);
         return userDO.getQuestion();
     }

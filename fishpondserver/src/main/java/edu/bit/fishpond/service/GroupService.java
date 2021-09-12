@@ -184,9 +184,11 @@ public class GroupService {
         }
 
         List<Integer> messageIdList = serviceDao.queryLatestGroupMessageList(userId);
+        logger.info(String.valueOf(messageIdList.size()));
         List<MessageEntity> latestGroupMessageList = new ArrayList<>();
 
         for (int messageId : messageIdList) {
+            logger.info("messageId" + messageId);
             latestGroupMessageList.add(getGroupMessageInfoById(messageId));
         }
 

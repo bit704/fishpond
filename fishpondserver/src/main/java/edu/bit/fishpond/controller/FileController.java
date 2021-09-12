@@ -16,8 +16,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 
 @Controller
 public class FileController {
@@ -91,19 +93,71 @@ public class FileController {
             return null;
     }
 
-    @PostMapping("/download2")
-    public ResponseEntity<FileSystemResource> download(@RequestParam String filename)
+    @PostMapping("/uploadAvatar")
+    public @ResponseBody boolean uploadAvatar(@RequestParam MultipartFile file,@RequestParam int id)
     {
-        if(filename == null || filename.isEmpty())
-            return null;
-        File file = Paths.get(fileStoragePath, "20181575").resolve(filename).toFile();
-        if(file.exists() && file.canRead())
+        String filename;
+
+        if(file == null || file.isEmpty())
+            return false;
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename != null) {
+            String originalExtensionName = originalFilename.substring(originalFilename.lastIndexOf("."));
+            filename = "avatar" + originalExtensionName;
+        }
+        else {
+            filename = "avatar.jpg";
+        }
+        try(InputStream inputStream = file.getInputStream())
         {
-            System.out.println("download file , filename is "+filename);
-            return ResponseEntity.ok().contentType(MediaType.MULTIPART_FORM_DATA)
-                    .body(new FileSystemResource(file));
+            Path personUploadPath = Paths.get(fileStoragePath, String.valueOf(id));
+            if(!personUploadPath.toFile().exists()) {
+                boolean res = personUploadPath.toFile().mkdirs();
+                if (!res) {
+                    return false;
+                }
+            }
+            Files.copy(inputStream, Paths.get(personUploadPath.toString()).resolve(filename),
+                    StandardCopyOption.REPLACE_EXISTING);
+            logger.info(String.format("%d upload avatar", id));
+            return true;
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    @PostMapping("/downloadAvatar")
+    public ResponseEntity<FileSystemResource> downloadAvatar(@RequestParam int id)
+    {
+        Path personAvatarPath = Paths.get(fileStoragePath, String.valueOf(id));
+        File[] files = personAvatarPath.toFile().listFiles();
+        if (files == null) {
+            return null;
+        }
+        File avatarFile = null;
+        for (File aFile : files) {
+            String aFilename = aFile.getName();
+            if ("avatar".equals(aFilename.substring(0, aFilename.lastIndexOf(".")))) {
+                avatarFile = aFile;
+                break;
+            }
+        }
+        if (avatarFile == null) {
+            return null;
+        }
+        if(avatarFile.exists() && avatarFile.canRead())
+        {
+            logger.info(String.format("%d download avatar", id));
+            return ResponseEntity.ok()
+                    .contentType(avatarFile.getName().contains(".jpg") ? MediaType.IMAGE_JPEG : MediaType.IMAGE_PNG)
+                    .body(new FileSystemResource(avatarFile));
         }
         else
             return null;
     }
+
+
 }

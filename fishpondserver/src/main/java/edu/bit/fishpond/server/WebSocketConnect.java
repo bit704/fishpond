@@ -243,6 +243,16 @@ public class WebSocketConnect {
                     serverMessageList = groupService.exitGroupHandler(exitGroupEntity);
                     sendServerMessage(serverMessageList);
                     break;
+                case "ForgetPassword":
+                    SingleIntEntity forgetPasswordEntity = JSON.parseObject(body, SingleIntEntity.class);
+                    serverMessageList = userService.getSecureQuestion(forgetPasswordEntity);
+                    sendServerMessage(serverMessageList);
+                    break;
+                case "NewSecureInfo":
+                    NewSecureInfoEntity newSecureInfoEntity = JSON.parseObject(body, NewSecureInfoEntity.class);
+                    serverMessageList = userService.setNewSecureInfo(newSecureInfoEntity);
+                    sendServerMessage(serverMessageList);
+                    break;
                 case "OffLine":
                     SingleIntEntity offLineEntity = JSON.parseObject(body, SingleIntEntity.class);
                     connectService.offLine(offLineEntity);
