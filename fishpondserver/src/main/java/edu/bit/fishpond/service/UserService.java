@@ -23,7 +23,6 @@ public class UserService {
     @Autowired
     public UserService(@Qualifier("IServiceDaoImpl") IServiceDao iServiceDao){
         this.iServiceDao = iServiceDao;
-        this.iServiceDao.clearDAO();
     }
 
     private final IServiceDao iServiceDao;
@@ -325,6 +324,56 @@ public class UserService {
         UserInfoEntity userInfoEntity = getUserInfoById(id);
         String sendMessageBody = JSON.toJSONString(userInfoEntity);
         serverMessageList.add(new ServerMessage(0, "UserInfo",sendMessageBody));
+
+        return serverMessageList;
+    }
+
+    public List<ServerMessage> getSecureQuestion(SingleIntEntity singleIntEntity) {
+        List<ServerMessage> serverMessageList = new ArrayList<>();
+
+        int userId = singleIntEntity.getUserId();
+        if (!iServiceDao.checkUserIdExist(userId)) {
+            logger.warn("用户不存在" + userId);
+            serverMessageList.add(ErrorPackUtil.getCustomError("用户不存在" + userId,0));
+            return serverMessageList;
+        }
+
+        SecureQuestionEntity secureQuestionEntity = new SecureQuestionEntity();
+        String queryString = iServiceDao.querySecureQuestion(userId);
+        String[] splitArray = queryString.split("#");
+        if (splitArray.length == 2) {
+            secureQuestionEntity.setQuestion(splitArray[0]);
+            secureQuestionEntity.setAnswer(splitArray[1]);
+        }
+        else {
+            logger.error(String.format("无法解析数据层数据:%s,解析后实际length为:%d，设定为2",
+                    queryString,splitArray.length));
+        }
+        String sendMessageBody = JSON.toJSONString(secureQuestionEntity);
+        serverMessageList.add(new ServerMessage(0, "SecureQuestion", sendMessageBody));
+
+        return serverMessageList;
+    }
+
+    public List<ServerMessage> setNewSecureInfo(NewSecureInfoEntity newSecureInfoEntity) {
+        List<ServerMessage> serverMessageList = new ArrayList<>();
+
+        int userId = newSecureInfoEntity.getUserId();
+        String password = newSecureInfoEntity.getNewPassword();
+        String question = newSecureInfoEntity.getNewSecureQuestion();
+        String answer = newSecureInfoEntity.getNewAnswer();
+
+        if (!iServiceDao.checkUserIdExist(userId)) {
+            logger.warn("用户不存在" + userId);
+            serverMessageList.add(ErrorPackUtil.getCustomError("用户不存在" + userId,0));
+            return serverMessageList;
+        }
+        iServiceDao.updateUserSecureInfo(userId, password, question, answer);
+        LoginServerEntity loginServerEntity = new LoginServerEntity();
+        loginServerEntity.setLoginResult(true);
+
+        String sendMessageBody  = JSON.toJSONString(loginServerEntity);
+        serverMessageList.add(new ServerMessage(0, "SecureChangeResult", sendMessageBody));
 
         return serverMessageList;
     }

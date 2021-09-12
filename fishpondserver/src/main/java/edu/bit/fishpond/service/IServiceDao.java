@@ -335,16 +335,9 @@ public interface IServiceDao {
     /**
      * 查询指定用户的密保问题
      * @param userId 用户id
-     * @return 密保问题
+     * @return 密保问题及答案（用#分开）
      */
-    String queryEncryptedQuestion(int userId);
-
-    /**
-     * 检查指定用户的密保答案是否正确
-     * @param userId 用户id
-     * @return 是否正确
-     */
-    boolean checkEncryptedAnswer(int userId, String answer);
+    String querySecureQuestion(int userId);
 
     /**
      * 更新用户安全信息
