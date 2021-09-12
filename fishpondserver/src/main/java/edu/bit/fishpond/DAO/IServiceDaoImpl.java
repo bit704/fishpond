@@ -422,6 +422,7 @@ public class IServiceDaoImpl implements IServiceDao {
         return groupMessageMapper.getLastSqValue();
     }
 
+
     @Override
     public String queryGroupMessageInfoById(int messageId) {
         GroupMessageDO groupMessageDO = groupMessageMapper.selectByGmid(messageId);
@@ -440,7 +441,7 @@ public class IServiceDaoImpl implements IServiceDao {
         List<Integer> result = new ArrayList<>();
         for (Integer gid : groupList)
         {
-            result.add(groupMessageMapper.selectGmidByPartnerLatest(userId,gid).get(0));
+            result.add(groupMessageMapper.selectGmidByPartnerLatest(gid).get(0));
         }
         return result;
     }
