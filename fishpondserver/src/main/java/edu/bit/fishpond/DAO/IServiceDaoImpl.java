@@ -491,14 +491,9 @@ public class IServiceDaoImpl implements IServiceDao {
     @Override
     public String querySecureQuestion(int userId) {
         UserDO userDO = userMapper.selectOneById(userId);
-        return userDO.getQuestion();
+        return userDO.getQuestion() + "#" + userDO.getAnswer();
     }
 
-    @Override
-    public boolean checkEncryptedAnswer(int userId, String answer) {
-        UserDO userDO = userMapper.selectOneById(userId);
-        return userDO.getAnswer().equals(answer);
-    }
 
     @Override
     public void updateUserSecureInfo(int userId, String password, String question, String answer) {
