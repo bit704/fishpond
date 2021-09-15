@@ -250,7 +250,7 @@ public class WebSocketConnect {
                     break;
                 case "NewSecureInfo":
                     NewSecureInfoEntity newSecureInfoEntity = JSON.parseObject(body, NewSecureInfoEntity.class);
-                    serverMessageList = userService.setNewSecureInfo(newSecureInfoEntity);
+                    serverMessageList = userService.setNewSecureInfo(newSecureInfoEntity, privateKey);
                     sendServerMessage(serverMessageList);
                     break;
                 case "OffLine":
