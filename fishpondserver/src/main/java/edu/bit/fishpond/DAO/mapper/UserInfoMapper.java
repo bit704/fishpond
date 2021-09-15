@@ -74,9 +74,9 @@ public interface UserInfoMapper {
     @Update("update "
             + tableName
             + " set name = ${name} "
-            + " and sex = #{sex} "
-            + " and birthday = #{birthday} "
-            + " and region = #{region} "
+            + " , sex = #{sex} "
+            + " , birthday = #{birthday} "
+            + " , region = #{region} "
             + " where uid = #{uid}")
     public int updateInfo(@Param("uid") int uid,
                          @Param("name") String name,

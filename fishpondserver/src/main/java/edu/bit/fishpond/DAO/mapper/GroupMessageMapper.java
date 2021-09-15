@@ -30,7 +30,7 @@ public interface GroupMessageMapper {
             + " where ( receiver = #{gid} )"
             + " and send_time = (select max(send_time) from "
             + tableName
-            + " where (receiver = #{gid} )" )
+            + " where (receiver = #{gid} ) )" )
     public List<Integer> selectGmidByPartnerLatest(@Param("gid") int gid);
 
 

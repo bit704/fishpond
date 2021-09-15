@@ -355,11 +355,12 @@ public class UserService {
         return serverMessageList;
     }
 
-    public List<ServerMessage> setNewSecureInfo(NewSecureInfoEntity newSecureInfoEntity) {
+    public List<ServerMessage> setNewSecureInfo(NewSecureInfoEntity newSecureInfoEntity, RSAPrivateKey privateKey) {
         List<ServerMessage> serverMessageList = new ArrayList<>();
 
         int userId = newSecureInfoEntity.getUserId();
         String password = newSecureInfoEntity.getNewPassword();
+        String passwordDecrypt = SecureForServerp.decryptRSA(password, privateKey);
         String question = newSecureInfoEntity.getNewSecureQuestion();
         String answer = newSecureInfoEntity.getNewAnswer();
 
@@ -368,7 +369,7 @@ public class UserService {
             serverMessageList.add(ErrorPackUtil.getCustomError("用户不存在" + userId,0));
             return serverMessageList;
         }
-        iServiceDao.updateUserSecureInfo(userId, password, question, answer);
+        iServiceDao.updateUserSecureInfo(userId, passwordDecrypt, question, answer);
         LoginServerEntity loginServerEntity = new LoginServerEntity();
         loginServerEntity.setLoginResult(true);
 
